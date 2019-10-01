@@ -41,6 +41,7 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     //TODO: add offline flag and check it
     let _ = update_registry_index(&reg_url);
 
+    //TODO: do we still need this if we fetch the manifest online ?
     // Verify module exists in registry, and get latest version
     let mut dep = get_latest_dependency(module, false, manifest_path.as_ref(), &Some(reg_url))
         .map_err(|e| CliError::Dependency(e.to_string()))?;
@@ -53,7 +54,7 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
         .map_err(|e| CliError::Registry(e.to_string()))?;
     println!("Registry path: {:?}", reg_path);
 
-    let metadata = get_metadata(module, manifest_path, &reg_path)?;
+    let metadata = get_metadata(&dep, manifest_path, &reg_path)?;
     println!("Module metadata: {:?}", metadata);
 
     // dep = dep

@@ -2,13 +2,16 @@
 
 mod error;
 mod metadata;
+mod module;
 mod registry;
 mod util;
 
 use crate::error::*;
 use crate::metadata::get_metadata;
+use crate::module::to_toml;
 use crate::registry::registry_path;
 use crate::util::find_manifest_file;
+use cargo_edit::Dependency;
 
 use std::{
     env,
@@ -62,24 +65,23 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     //     .set_default_features(false);
 
     // Add module to runtime Cargo.toml
-    // let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf())).unwrap();
-    // let _ = manifest
-    //     .insert_into_table(&["dependencies".to_owned()], &dep)
-    //     .map(|_| {
-    //         manifest
-    //             .get_table(&["dependencies".to_owned()])
-    //             .map(TomlItem::as_table_mut)
-    //         // .map(|table_option| {
-    //         //     table_option.map(|table| {
-    //         //         if args.sort {
-    //         //             table.sort_values();
-    //         //         }
-    //         //     })
-    //         // })
-    //     })
-    //     .unwrap();
-    // let mut file = Manifest::find_file(&Some(manifest_path.to_path_buf())).unwrap();
-    // manifest.write_to_file(&mut file).unwrap();
+    let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf())).unwrap();
+    let _ = insert_into_table(&mut manifest, &["dependencies".to_owned()], &dep)
+        // .map(|_| {
+        //     manifest
+        //         .get_table(&["dependencies".to_owned()])
+        //         .map(TomlItem::as_table_mut)
+        //         .map(|table_option| {
+        //             table_option.map(|table| {
+        //                 // if args.sort {
+        //                 table.sort_values();
+        //                 // }
+        //             })
+        //         })
+        // })
+        .unwrap();
+    let mut file = Manifest::find_file(&Some(manifest_path.to_path_buf())).unwrap();
+    manifest.write_to_file(&mut file).unwrap();
 
     // Do cargo fetch, to fetch module & its dependencies
     let cfg = Config::default().unwrap();
@@ -102,25 +104,31 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     Ok(())
 }
 
-// mod code_from_cargo {
-//     #![allow(dead_code)]
+pub fn insert_into_table(
+    manifest: &mut Manifest,
+    table_path: &[String],
+    dep: &Dependency,
+) -> CliResult<()> {
+    let table = manifest.get_table(table_path).unwrap();
 
-//     #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-//     pub enum Kind {
-//         Git(GitReference),
-//         Path,
-//         Registry,
-//         LocalRegistry,
-//         Directory,
-//     }
-
-//     #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-//     pub enum GitReference {
-//         Tag(String),
-//         Branch(String),
-//         Rev(String),
-//     }
-// }
+    if table[&dep.name].is_none() {
+        // insert a new entry
+        let (name, new_dependency) = to_toml(&dep);
+        let root = manifest.data.as_table_mut();
+        let dep_entry = root.entry(&name);
+        let mut dep_table_opt = dep_entry.as_table_mut();
+        let dep_table = dep_table_opt.unwrap();
+        *dep_table = new_dependency;
+        // table[name] = *new_dependency;
+    } /*else {
+          // update an existing entry
+          merge_dependencies(&mut table[&dep.name], dep);
+          if let Some(t) = table.as_inline_table_mut() {
+              t.fmt()
+          }
+      }*/
+    Ok(())
+}
 
 fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())

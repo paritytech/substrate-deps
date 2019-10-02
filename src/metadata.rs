@@ -4,34 +4,43 @@ use cargo_edit::Dependency;
 use cargo_metadata::{Metadata, MetadataCommand};
 use git2::Repository;
 use reqwest::header::CONTENT_LENGTH;
+use serde::Deserialize;
 use std::fs;
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
 
-// #[derive(Clone, Serialize, Deserialize, Debug)]
-// /// Starting point for metadata returned by `cargo metadata`
-// pub struct SubstrateMetadata {
-//     /// A list of all crates referenced by this crate (and the crate itself)
-//     pub packages: Vec<Package>,
-//     /// A list of all workspace members
-//     pub workspace_members: Vec<PackageId>,
-//     /// Dependencies graph
-//     pub resolve: Option<Resolve>,
-//     /// Workspace root
-//     pub workspace_root: PathBuf,
-//     /// Build directory
-//     pub target_directory: PathBuf,
-//     version: usize,
-//     #[doc(hidden)]
-//     #[serde(skip)]
-//     __do_not_match_exhaustively: (),
-// }
+#[derive(Clone, Debug, Deserialize)]
+struct Manifest {
+    package: Option<Package>,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct Package {
+    name: String,
+    version: String,
+    metadata: Option<PackageMetadata>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+struct PackageMetadata {
+    substrate: Option<SubstrateMetadata>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct SubstrateMetadata {
+    module_name: String,
+    module_labe: Option<String>,
+    icon: Option<String>,
+    module_categories: Option<Vec<String>>,
+    module_deps_defaults: Option<Vec<String>>,
+    trait_deps_defaults: Option<Vec<String>>,
+}
 
 pub fn get_metadata(
     module: &Dependency,
     manifest_path: &Path,
     registry_path: &Path,
-) -> CliResult<()> {
+) -> CliResult<SubstrateMetadata> {
     // let reg_path = registry_path(manifest_path.as_ref(), registry)
     //     .map_err(|e| CliError::Registry(e.to_string()));
     // println!("Registry path: {:?}", reg_path);
@@ -94,10 +103,8 @@ pub fn get_metadata(
 
     let mut s = String::new();
     manifest.read_to_string(&mut s).unwrap();
-    // println!("{}", s);
 
-    let manifest_toml = toml::from_str(&s)?;
-    println!("{:?}", manifest_toml);
+    let manifest_toml: Manifest = toml::from_str(&s)?;
 
     // .data
     //     .as_table()
@@ -167,7 +174,13 @@ pub fn get_metadata(
     //     .exec()
     //     .map_err(|e| CliError::Metadata(e.to_string()))?;
     // Ok(metadata)
-    Ok(())
+    Ok(manifest_toml
+        .package
+        .unwrap()
+        .metadata
+        .unwrap()
+        .substrate
+        .unwrap())
 }
 
 fn summary_raw_path(crate_name: &str) -> String {

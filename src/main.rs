@@ -4,6 +4,7 @@ mod error;
 mod metadata;
 mod module;
 mod registry;
+mod runtime;
 mod util;
 
 use crate::error::*;
@@ -58,7 +59,7 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     println!("Registry path: {:?}", reg_path);
 
     let metadata = get_metadata(&dep, manifest_path, &reg_path)?;
-    println!("Module metadata: {:?}", metadata);
+    println!("Module metadata: {:?}", &metadata);
 
     // dep = dep
     //     .set_registry("substrate-mods")
@@ -67,21 +68,41 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     // Add module to runtime Cargo.toml
     let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf())).unwrap();
     let _ = insert_into_table(&mut manifest, &["dependencies".to_owned()], &dep)
-        // .map(|_| {
-        //     manifest
-        //         .get_table(&["dependencies".to_owned()])
-        //         .map(TomlItem::as_table_mut)
-        //         .map(|table_option| {
-        //             table_option.map(|table| {
-        //                 // if args.sort {
-        //                 table.sort_values();
-        //                 // }
-        //             })
-        //         })
-        // })
+        .map(|_| {
+            manifest
+                .get_table(&["dependencies".to_owned()])
+                .map(TomlItem::as_table_mut)
+                .map(|table_option| {
+                    table_option.map(|table| {
+                        // if args.sort {
+                        table.sort_values();
+                        // }
+                    })
+                })
+        })
         .unwrap();
+
+    let std_features = manifest
+        .get_table(&["features".to_owned()])
+        .unwrap()
+        .as_table_mut()
+        .unwrap()
+        .entry("std")
+        .as_array_mut()
+        .unwrap();
+
+    let dep_feature = format!("{}/std", metadata.module_name());
+    if !std_features
+        .iter()
+        .any(|v| v.as_str() == Some(&dep_feature))
+    {
+        std_features.push(dep_feature);
+    }
+
     let mut file = Manifest::find_file(&Some(manifest_path.to_path_buf())).unwrap();
     manifest.write_to_file(&mut file).unwrap();
+
+    runtime::patch_runtime(manifest_path.as_ref(), metadata);
 
     // Do cargo fetch, to fetch module & its dependencies
     let cfg = Config::default().unwrap();
@@ -114,12 +135,11 @@ pub fn insert_into_table(
     if table[&dep.name].is_none() {
         // insert a new entry
         let (name, new_dependency) = to_toml(&dep);
-        let root = manifest.data.as_table_mut();
-        let dep_entry = root.entry(&name);
-        let mut dep_table_opt = dep_entry.as_table_mut();
-        let dep_table = dep_table_opt.unwrap();
-        *dep_table = new_dependency;
-        // table[name] = *new_dependency;
+        // let root = manifest.data.as_table_mut();
+        let deps = table.as_table_mut().unwrap();
+        let _ = deps
+            .entry(&name)
+            .or_insert(toml_edit::Item::Table(new_dependency));
     } /*else {
           // update an existing entry
           merge_dependencies(&mut table[&dep.name], dep);

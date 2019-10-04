@@ -29,11 +29,33 @@ struct PackageMetadata {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct SubstrateMetadata {
     module_name: String,
-    module_labe: Option<String>,
+    module_label: Option<String>,
     icon: Option<String>,
     module_categories: Option<Vec<String>>,
     module_deps_defaults: Option<Vec<String>>,
     trait_deps_defaults: Option<Vec<String>>,
+}
+
+impl SubstrateMetadata {
+    pub fn module_name(&self) -> &String {
+        &self.module_name
+    }
+
+    pub fn module_label(&self) -> &Option<String> {
+        &self.module_label
+    }
+
+    pub fn module_categories(&self) -> &Option<Vec<String>> {
+        &self.module_categories
+    }
+
+    pub fn module_deps_defaults(&self) -> &Option<Vec<String>> {
+        &self.module_deps_defaults
+    }
+
+    pub fn trait_deps_defaults(&self) -> &Option<Vec<String>> {
+        &self.trait_deps_defaults
+    }
 }
 
 pub fn get_metadata(

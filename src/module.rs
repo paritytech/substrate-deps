@@ -13,7 +13,7 @@ pub fn to_toml(dep: &Dependency) -> (String, toml_edit::Table) {
     data["default-features"] = toml_edit::value(false);
     data["registry"] = toml_edit::value("substrate-mods");
 
-    ("dependencies.template".to_string(), data)
+    ("template".to_string(), data)
 
     // let data: toml_edit::Item = match (dep.optional, dep.default_features, dep.source.clone()) {
     //     // Extra short when version flag only

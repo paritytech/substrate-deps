@@ -1,6 +1,7 @@
 #![warn(clippy::all)]
 
 mod error;
+mod manifest;
 mod metadata;
 mod module;
 mod registry;
@@ -8,6 +9,7 @@ mod runtime;
 mod util;
 
 use crate::error::*;
+use crate::manifest::insert_into_table;
 use crate::metadata::get_metadata;
 use crate::module::to_toml;
 use crate::registry::registry_path;
@@ -32,6 +34,8 @@ use clap::{crate_description, crate_name, crate_version, App, Arg, ArgMatches, S
 use toml::{self, Value};
 use toml_edit::Item as TomlItem;
 use url::Url;
+
+const SUBSTRATE_REGISTRY: &str = "substrate-mods";
 
 fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> CliResult<()> {
     println!("Manifest path: {:?}", manifest_path);
@@ -125,31 +129,6 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     Ok(())
 }
 
-pub fn insert_into_table(
-    manifest: &mut Manifest,
-    table_path: &[String],
-    dep: &Dependency,
-) -> CliResult<()> {
-    let table = manifest.get_table(table_path).unwrap();
-
-    if table[&dep.name].is_none() {
-        // insert a new entry
-        let (name, new_dependency) = to_toml(&dep);
-        // let root = manifest.data.as_table_mut();
-        let deps = table.as_table_mut().unwrap();
-        let _ = deps
-            .entry(&name)
-            .or_insert(toml_edit::Item::Table(new_dependency));
-    } /*else {
-          // update an existing entry
-          merge_dependencies(&mut table[&dep.name], dep);
-          if let Some(t) = table.as_inline_table_mut() {
-              t.fmt()
-          }
-      }*/
-    Ok(())
-}
-
 fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
         .version(crate_version!())
@@ -163,6 +142,21 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .global(true)
                 .default_value("Cargo.toml"),
         )
+        .arg(
+            Arg::with_name("registry")
+                .long("registry")
+                .value_name("registry")
+                .help("Registry to use")
+                .takes_value(true)
+                .global(true)
+                // For now, we target the Substrate alternative registry.
+                // When Substrate stable modules & core crates are published
+                // on crates.io, this default value will be removed and
+                // crates.io will be used as the default registry.
+                .default_value(SUBSTRATE_REGISTRY),
+        )
+        //TODO: add support for verbose, quiet, (module) version,
+        // offline, locked, no-default-features, etc
         .subcommand(
             SubCommand::with_name("add")
                 .about("Adds a module to the Substrate runtime.")
@@ -179,15 +173,14 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
 fn main() {
     let m = parse_cli();
 
-    // let registry_path = cargo_edit::registry_url(manifest_path: &Path, registry: Option<&str>)
-
     if let Some(m) = m.subcommand_matches("add") {
         //TODO: move to config.rs
-        let manifest = m.value_of("manifest-path").unwrap();
-        let manifest_path = find_manifest_file(manifest).unwrap();
-        let module = m.value_of("module").unwrap();
-        let registry = Some("substrate-mods");
-        //--
+        let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
+        let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
+        let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
+        let registry = m.value_of("registry");
+        //TODO: should get (local registry path, registry uri)
+
         if let Err(err) = handle_add(&manifest_path, module, registry) {
             eprintln!("{}", err);
             std::process::exit(1);

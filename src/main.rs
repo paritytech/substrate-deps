@@ -3,129 +3,76 @@
 mod error;
 mod manifest;
 mod metadata;
-mod module;
 mod registry;
 mod runtime;
-mod util;
 
 use crate::error::*;
-use crate::manifest::insert_into_table;
-use crate::metadata::get_metadata;
-use crate::module::to_toml;
+use crate::manifest::{add_module_to_manifest, find_manifest_file};
+use crate::metadata::get_module_metadata;
 use crate::registry::registry_path;
-use crate::util::find_manifest_file;
-use cargo_edit::Dependency;
+use crate::runtime::add_module_to_runtime;
 
-use std::{
-    env,
-    fs::{self, File},
-    io::Read,
-    path::{Path, PathBuf},
-};
+use std::{env, path::PathBuf};
 
-use cargo::{
-    core::Workspace,
-    ops::{fetch, FetchOptions},
-    util::Config,
-};
-use cargo_edit::{get_latest_dependency, registry_url, update_registry_index, Manifest};
-use cargo_metadata::MetadataCommand;
+use cargo_edit::{get_latest_dependency, registry_url, update_registry_index};
 use clap::{crate_description, crate_name, crate_version, App, Arg, ArgMatches, SubCommand};
-use toml::{self, Value};
-use toml_edit::Item as TomlItem;
-use url::Url;
+use log::{debug, info, warn, LevelFilter};
 
 const SUBSTRATE_REGISTRY: &str = "substrate-mods";
 
 fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> CliResult<()> {
-    println!("Manifest path: {:?}", manifest_path);
-    println!("Module: {:?}", module);
-    println!("Registry: {:?}", registry.unwrap());
-    // let manifest_toml = toml_from_file(manifest).unwrap();
+    debug!("Manifest path: {:?}", manifest_path);
+    debug!("Module: {}", module);
+    debug!("Registry: {:?}", registry);
+    assert!(registry.is_some(), "Must use a registry for now.");
 
+    // Lookup registry URL
     let reg_url = registry_url(manifest_path.as_ref(), registry)
         .map_err(|e| CliError::Registry(e.to_string()))?;
-    println!("Registry URL: {:?}", reg_url);
-    //TODO: add offline flag and check it
-    let _ = update_registry_index(&reg_url);
+    debug!("Registry URL: {}", reg_url);
 
-    //TODO: do we still need this if we fetch the manifest online ?
-    // Verify module exists in registry, and get latest version
-    let mut dep = get_latest_dependency(module, false, manifest_path.as_ref(), &Some(reg_url))
-        .map_err(|e| CliError::Dependency(e.to_string()))?;
-    println!("Module found: {:?}", dep);
-
-    // let metadata = MetadataCommand::new().manifest_path(manifest_path).exec();
-    // println!("Module metadata: {:?}", metadata);
-
+    // Lookup registry path
     let reg_path = registry_path(manifest_path.as_ref(), registry)
         .map_err(|e| CliError::Registry(e.to_string()))?;
-    println!("Registry path: {:?}", reg_path);
+    debug!("Registry path: {:?}", reg_path);
 
-    let metadata = get_metadata(&dep, manifest_path, &reg_path)?;
-    println!("Module metadata: {:?}", &metadata);
+    info!("Using registry '{}' at: {}", registry.unwrap(), reg_url);
 
-    // dep = dep
-    //     .set_registry("substrate-mods")
-    //     .set_default_features(false);
+    // Update registry index
+    //TODO: add offline flag and skip update if set
+    update_registry_index(&reg_url).map_err(|e| CliError::Registry(e.to_string()))?;
 
-    // Add module to runtime Cargo.toml
-    let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf())).unwrap();
-    let _ = insert_into_table(&mut manifest, &["dependencies".to_owned()], &dep)
-        .map(|_| {
-            manifest
-                .get_table(&["dependencies".to_owned()])
-                .map(TomlItem::as_table_mut)
-                .map(|table_option| {
-                    table_option.map(|table| {
-                        // if args.sort {
-                        table.sort_values();
-                        // }
-                    })
-                })
-        })
-        .unwrap();
+    // Lookup module latest version
+    let mod_dependency =
+        get_latest_dependency(module, true, manifest_path.as_ref(), &Some(reg_url))
+            .map_err(|e| CliError::Dependency(e.to_string()))?;
 
-    let std_features = manifest
-        .get_table(&["features".to_owned()])
-        .unwrap()
-        .as_table_mut()
-        .unwrap()
-        .entry("std")
-        .as_array_mut()
-        .unwrap();
+    let mod_name = &mod_dependency.name;
+    let mod_version = &mod_dependency.version().unwrap();
+    debug!("Module found: {} v{}", mod_name, mod_version);
 
-    let dep_feature = format!("{}/std", metadata.module_name());
-    if !std_features
-        .iter()
-        .any(|v| v.as_str() == Some(&dep_feature))
-    {
-        std_features.push(dep_feature);
-    }
+    // Fetch module metadata
+    let mod_metadata = get_module_metadata(&mod_dependency, manifest_path, &reg_path)?
+        .ok_or_else(|| CliError::Metadata(format!("No metadata found for module {}", module)))?;
 
-    let mut file = Manifest::find_file(&Some(manifest_path.to_path_buf())).unwrap();
-    manifest.write_to_file(&mut file).unwrap();
+    // Add module to runtime manifest
+    add_module_to_manifest(
+        manifest_path.as_ref(),
+        &mod_dependency,
+        &mod_metadata,
+        registry,
+    )?;
 
-    runtime::patch_runtime(manifest_path.as_ref(), metadata);
+    info!(
+        "Added module {} v{} as dependency in your node runtime manifest.",
+        mod_name, mod_version
+    );
 
-    // Do cargo fetch, to fetch module & its dependencies
-    let cfg = Config::default().unwrap();
-    // let ws_manifest = &manifest_path
-    //     .parent()
-    //     .unwrap()
-    //     .parent()
-    //     .unwrap()
-    //     .join("Cargo.toml");
-    // println!("{}", ws_manifest.as_path().display());
-    // let ws = Workspace::new(&manifest_path, &cfg).unwrap();
-    // let opts = FetchOptions {
-    //     config: &cfg,
-    //     target: None,
-    // };
-    // let _result = fetch(&ws, &opts).unwrap();
+    // Add module default config to runtime's lib.rs
+    add_module_to_runtime(manifest_path.as_ref(), mod_metadata)?;
 
-    // Build deps map, parse modules metadata, and add
-    // modules concerned by 'defaults' in metadata.
+    info!("Added module configuration in your node runtime.");
+
     Ok(())
 }
 
@@ -143,6 +90,13 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .default_value("Cargo.toml"),
         )
         .arg(
+            Arg::with_name("quiet")
+                .long("quiet")
+                .short("q")
+                .global(true)
+                .help("No output printed to stdout"),
+        )
+        .arg(
             Arg::with_name("registry")
                 .long("registry")
                 .value_name("registry")
@@ -154,6 +108,14 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 // on crates.io, this default value will be removed and
                 // crates.io will be used as the default registry.
                 .default_value(SUBSTRATE_REGISTRY),
+        )
+        .arg(
+            Arg::with_name("v")
+                .long("verbose")
+                .short("v")
+                .multiple(true)
+                .global(true)
+                .help("Use verbose output"),
         )
         //TODO: add support for verbose, quiet, (module) version,
         // offline, locked, no-default-features, etc
@@ -170,8 +132,30 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
         .get_matches()
 }
 
+fn config_log(m: &ArgMatches) {
+    let log_level = if m.is_present("quiet") {
+        LevelFilter::Error
+    } else {
+        match m.occurrences_of("v") {
+            0 => LevelFilter::Info,
+            1 => LevelFilter::Debug,
+            2 | _ => LevelFilter::Trace,
+        }
+    };
+    env_logger::from_env(env_logger::Env::default().default_filter_or(format!(
+        "{}={}",
+        crate_name!().replace("-", "_"),
+        log_level
+    )))
+    .format_timestamp(None)
+    .format_level(false)
+    .format_module_path(false)
+    .init();
+}
+
 fn main() {
     let m = parse_cli();
+    config_log(&m);
 
     if let Some(m) = m.subcommand_matches("add") {
         //TODO: move to config.rs

@@ -10,6 +10,7 @@ pub enum CliError {
     Dependency(String),
     Generic(String),
     Io(io::Error),
+    Manifest(String),
     Metadata(String),
     Registry(String),
     Toml(String),
@@ -21,6 +22,7 @@ impl Display for CliError {
             Self::Dependency(ref e) => write!(f, "{}", e),
             Self::Generic(ref e) => write!(f, "{}", e),
             Self::Io(ref e) => write!(f, "{}", e),
+            Self::Manifest(ref e) => write!(f, "{}", e),
             Self::Metadata(ref e) => write!(f, "{}", e),
             Self::Registry(ref e) => write!(f, "{}", e),
             Self::Toml(ref e) => write!(f, "Could not parse toml file: {}", e),
@@ -36,15 +38,39 @@ impl CliError {
     }
 }
 
+impl From<io::Error> for CliError {
+    fn from(err: io::Error) -> Self {
+        Self::Io(err)
+    }
+}
+
 impl From<git2::Error> for CliError {
     fn from(err: git2::Error) -> Self {
         Self::Metadata(format!("Error reading module metadata: {}", err))
     }
 }
 
-impl From<io::Error> for CliError {
-    fn from(ioe: io::Error) -> Self {
-        Self::Io(ioe)
+impl From<json::Error> for CliError {
+    fn from(err: json::Error) -> Self {
+        Self::Metadata(format!("Error reading module metadata: {}", err))
+    }
+}
+
+impl From<std::string::FromUtf8Error> for CliError {
+    fn from(err: std::string::FromUtf8Error) -> Self {
+        Self::Metadata(format!("Error reading module metadata: {}", err))
+    }
+}
+
+impl From<reqwest::Error> for CliError {
+    fn from(err: reqwest::Error) -> Self {
+        Self::Metadata(format!("Error reading module metadata: {}", err))
+    }
+}
+
+impl From<regex::Error> for CliError {
+    fn from(err: regex::Error) -> Self {
+        Self::Generic(format!("Invalid regex definition: {}", err))
     }
 }
 

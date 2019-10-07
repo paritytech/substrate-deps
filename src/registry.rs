@@ -1,11 +1,23 @@
 use self::code_from_cargo::Kind;
 use crate::error::*;
-use cargo_edit::{registry_url, Manifest};
-use std::env;
+
 use std::path::{Path, PathBuf};
+
+use cargo_edit::registry_url;
 use url::Url;
 
 // From https://github.com/tofay/cargo-edit/blob/alt-registries/src/registry.rs
+
+fn cargo_home() -> CliResult<PathBuf> {
+    let default_cargo_home = dirs::home_dir()
+        .map(|x| x.join(".cargo"))
+        .ok_or_else(|| CliError::Generic("Error reading cargo home dir.".to_owned()))?;
+    // .chain_err(|| ErrorKind::ReadHomeDirFailure)?;
+    let cargo_home = std::env::var("CARGO_HOME")
+        .map(PathBuf::from)
+        .unwrap_or(default_cargo_home);
+    Ok(cargo_home)
+}
 
 pub fn registry_path(manifest_path: &Path, registry: Option<&str>) -> CliResult<PathBuf> {
     registry_path_from_url(
@@ -18,17 +30,6 @@ pub fn registry_path_from_url(registry: &Url) -> CliResult<PathBuf> {
         .join("registry")
         .join("index")
         .join(short_name(registry)))
-}
-
-fn cargo_home() -> CliResult<PathBuf> {
-    let default_cargo_home = dirs::home_dir()
-        .map(|x| x.join(".cargo"))
-        .ok_or_else(|| CliError::Generic("Error reading cargo home dir.".to_owned()))?;
-    // .chain_err(|| ErrorKind::ReadHomeDirFailure)?;
-    let cargo_home = std::env::var("CARGO_HOME")
-        .map(PathBuf::from)
-        .unwrap_or(default_cargo_home);
-    Ok(cargo_home)
 }
 
 fn short_name(registry: &Url) -> String {

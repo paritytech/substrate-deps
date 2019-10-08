@@ -6,8 +6,14 @@ use std::path::{Path, PathBuf};
 use cargo_edit::Dependency;
 use git2::Repository;
 use log::debug;
+use regex::Regex;
 use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
+
+lazy_static! {
+    static ref MODULE_DEPS_REGEX: Regex = Regex::new(r"([\w\d_-]+):([\w\d_-]+)").unwrap();
+    static ref TRAIT_DEPS_REGEX: Regex = Regex::new(r"([\w\d_-]+)=([\w\d_-]+)").unwrap();
+}
 
 #[derive(Clone, Debug, Deserialize)]
 struct Manifest {
@@ -49,12 +55,30 @@ impl SubstrateMetadata {
         &self.module_categories
     }
 
-    pub fn module_deps_defaults(&self) -> &Option<Vec<String>> {
-        &self.module_deps_defaults
+    pub fn module_deps_defaults(&self) -> Option<Vec<(String, String)>> {
+        match &self.module_deps_defaults {
+            Some(deps) => deps
+                .iter()
+                .map(|dep| match MODULE_DEPS_REGEX.captures(dep) {
+                    Some(cap) => Some((cap[1].to_owned(), cap[2].to_owned())),
+                    None => None,
+                })
+                .collect(),
+            None => None,
+        }
     }
 
-    pub fn trait_deps_defaults(&self) -> &Option<Vec<String>> {
-        &self.trait_deps_defaults
+    pub fn trait_deps_defaults(&self) -> Option<Vec<(String, String)>> {
+        match &self.trait_deps_defaults {
+            Some(deps) => deps
+                .iter()
+                .map(|dep| match TRAIT_DEPS_REGEX.captures(dep) {
+                    Some(cap) => Some((cap[1].to_owned(), cap[2].to_owned())),
+                    None => None,
+                })
+                .collect(),
+            None => None,
+        }
     }
 }
 

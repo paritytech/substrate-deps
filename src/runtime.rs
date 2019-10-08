@@ -1,18 +1,26 @@
 use crate::error::{CliError, CliResult};
+use crate::manifest::module_name;
 use crate::metadata::SubstrateMetadata;
 
 use std::fs;
 use std::path::Path;
 
+use cargo_edit::Dependency;
 use inflector;
+use log::debug;
 use regex::Regex;
 
 pub fn add_module_to_runtime(
     manifest_path: &Path,
-    mod_metadata: SubstrateMetadata,
+    mod_dependency: &Dependency,
+    mod_metadata: &Option<SubstrateMetadata>,
 ) -> CliResult<()> {
+    assert!(
+        mod_metadata.is_some(),
+        "Should have metadata to update runtime."
+    );
     let runtime_lib_path = manifest_path.parent().unwrap().join("src").join("lib.rs");
-    let mod_name = mod_metadata.module_name();
+    let mod_name = module_name(mod_dependency, mod_metadata);
 
     let module_trait_existing = Regex::new(
         format!(
@@ -30,10 +38,17 @@ pub fn add_module_to_runtime(
         r"construct_runtime!\(\s+pub\s+enum\s+Runtime[^{]+\{(?P<modules>[\s\S]+)\}\s+\);",
     )?;
 
-    let mut module_trait_impl = format!("impl {}::Trait for Runtime {{ ", mod_name);
-    //TODO: loop & extract key-value pairs
-    module_trait_impl.push_str("type Currenty = Balances; ");
-    module_trait_impl.push_str("type Event = Event; ");
+    let mut module_trait_impl = format!("impl {}::Trait for Runtime {{ \n", mod_name);
+    match mod_metadata.as_ref().unwrap().trait_deps_defaults() {
+        Some(trait_defaults) => {
+            for trait_default in trait_defaults {
+                module_trait_impl.push_str(
+                    format!("\ttype {} = {};\n", trait_default.0, trait_default.1).as_ref(),
+                )
+            }
+        }
+        None => debug!("No trait defaults for module {}", mod_dependency.name),
+    }
     module_trait_impl.push_str("}");
 
     let module_config = format!(

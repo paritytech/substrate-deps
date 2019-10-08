@@ -6,6 +6,9 @@ mod metadata;
 mod registry;
 mod runtime;
 
+#[macro_use]
+extern crate lazy_static;
+
 use crate::error::*;
 use crate::manifest::{add_module_to_manifest, find_manifest_file};
 use crate::metadata::get_module_metadata;
@@ -17,6 +20,7 @@ use std::{env, path::PathBuf};
 use cargo_edit::{get_latest_dependency, registry_url, update_registry_index};
 use clap::{crate_description, crate_name, crate_version, App, Arg, ArgMatches, SubCommand};
 use log::{debug, info, warn, LevelFilter};
+use url::Url;
 
 const SUBSTRATE_REGISTRY: &str = "substrate-mods";
 
@@ -42,9 +46,20 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     //TODO: add offline flag and skip update if set
     update_registry_index(&reg_url).map_err(|e| CliError::Registry(e.to_string()))?;
 
+    // Add module dependency (and related dependencies, recursively)
+    add_module_dependency(manifest_path, module, (registry, &reg_url, &reg_path))?;
+
+    Ok(())
+}
+
+fn add_module_dependency(
+    manifest_path: &PathBuf,
+    module: &str,
+    (registry, reg_url, reg_path): (Option<&str>, &Url, &PathBuf),
+) -> CliResult<()> {
     // Lookup module latest version
     let mod_dependency =
-        get_latest_dependency(module, true, manifest_path.as_ref(), &Some(reg_url))
+        get_latest_dependency(module, true, manifest_path.as_ref(), &Some(reg_url.clone()))
             .map_err(|e| CliError::Dependency(e.to_string()))?;
 
     let mod_name = &mod_dependency.name;
@@ -52,8 +67,29 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     debug!("Module found: {} v{}", mod_name, mod_version);
 
     // Fetch module metadata
-    let mod_metadata = get_module_metadata(&mod_dependency, manifest_path, &reg_path)?
-        .ok_or_else(|| CliError::Metadata(format!("No metadata found for module {}", module)))?;
+    let mod_metadata = get_module_metadata(&mod_dependency, manifest_path, &reg_path)?;
+    match &mod_metadata {
+        Some(metadata) => {
+            if let Some(mod_deps) = metadata.module_deps_defaults() {
+                for mod_dep in mod_deps {
+                    add_module_dependency(
+                        manifest_path,
+                        &mod_dep.1,
+                        (registry, reg_url, reg_path),
+                    )?;
+                }
+            };
+
+            // Add module default config to runtime's lib.rs
+            add_module_to_runtime(manifest_path.as_ref(), &mod_dependency, &mod_metadata)?;
+
+            info!(
+                "Added module {} v{} as dependency in your node runtime manifest.",
+                mod_name, mod_version
+            );
+        }
+        None => info!("No metadata found for module {}", module),
+    }
 
     // Add module to runtime manifest
     add_module_to_manifest(
@@ -64,14 +100,9 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     )?;
 
     info!(
-        "Added module {} v{} as dependency in your node runtime manifest.",
+        "Added module {} v{} configuration in your node runtime.",
         mod_name, mod_version
     );
-
-    // Add module default config to runtime's lib.rs
-    add_module_to_runtime(manifest_path.as_ref(), mod_metadata)?;
-
-    info!("Added module configuration in your node runtime.");
 
     Ok(())
 }

@@ -54,21 +54,28 @@ pub fn find_manifest_file(file: &str) -> CliResult<PathBuf> {
 pub fn add_module_to_manifest(
     manifest_path: &Path,
     mod_dependency: &Dependency,
-    mod_metadata: &SubstrateMetadata,
+    mod_metadata: &Option<SubstrateMetadata>,
     registry: Option<&str>,
 ) -> CliResult<()> {
     // Open TOML manifest
     let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf()))
         .map_err(|e| CliError::Manifest(e.to_string()))?;
 
+    let mod_name = module_name(mod_dependency, mod_metadata);
+
     // Generate TOML table for module dependency
-    let mod_dep_toml = module_dependency_to_toml(&mod_dependency, &mod_metadata, registry);
+    let mod_dep_toml = module_dependency_to_toml(
+        mod_name,
+        mod_dependency.version().unwrap(),
+        &mod_dependency.name,
+        registry,
+    );
 
     // Add module TOML table to dependencies table
     insert_into_table(&mut manifest, &["dependencies".to_owned()], mod_dep_toml)?;
 
     // Add module/std to features table
-    let mod_feature = format!("{}/std", mod_metadata.module_name());
+    let mod_feature = format!("{}/std", mod_name);
     insert_into_array(&mut manifest, &["features".to_owned()], "std", mod_feature)?;
 
     // Write modified TOML manifest
@@ -139,17 +146,28 @@ fn insert_into_array(
     Ok(())
 }
 
+pub fn module_name<'a>(
+    mod_dependency: &'a Dependency,
+    mod_metadata: &'a Option<SubstrateMetadata>,
+) -> &'a str {
+    match mod_metadata {
+        Some(meta) => meta.module_name(),
+        None => &mod_dependency.name,
+    }
+}
+
 fn module_dependency_to_toml(
-    mod_dependency: &Dependency,
-    mod_metadata: &SubstrateMetadata,
+    name: &str,
+    version: &str,
+    package: &str,
     registry: Option<&str>,
 ) -> (String, toml_edit::Table) {
     let mut data = toml_edit::Table::new();
-    data["package"] = toml_edit::value(mod_dependency.name.clone());
-    data["version"] = toml_edit::value(mod_dependency.version().unwrap());
+    data["package"] = toml_edit::value(package);
+    data["version"] = toml_edit::value(version);
     data["default-features"] = toml_edit::value(false);
     if let Some(registry) = registry {
         data["registry"] = toml_edit::value(registry);
     }
-    (mod_metadata.module_name().into(), data)
+    (name.to_string(), data)
 }

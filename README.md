@@ -1,7 +1,7 @@
 substrate-deps
 ==============
 
-[![rust build](https://github.com/stiiifff/did-common-rust/workflows/rust/badge.svg)](https://github.com/stiiifff/substrate-deps/actions)
+[![rust build](https://github.com/stiiifff/substrate-deps/workflows/rust/badge.svg)](https://github.com/stiiifff/substrate-deps/actions)
 
 `substrate-deps` is a (experimental) command line tool for managing [Parity Substrate](http://substrate.dev) runtime module dependencies.
 It allows adding a new module to your runtime, and applying a default configuration so you can start hacking right away.

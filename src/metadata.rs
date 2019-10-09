@@ -40,6 +40,7 @@ pub struct SubstrateMetadata {
     module_categories: Option<Vec<String>>,
     module_deps_defaults: Option<Vec<String>>,
     trait_deps_defaults: Option<Vec<String>>,
+    module_cfg_defaults: Option<Vec<String>>,
 }
 
 impl SubstrateMetadata {
@@ -79,6 +80,10 @@ impl SubstrateMetadata {
                 .collect(),
             None => None,
         }
+    }
+
+    pub fn module_cfg_defaults(&self) -> &Option<Vec<String>> {
+        &self.module_cfg_defaults
     }
 }
 

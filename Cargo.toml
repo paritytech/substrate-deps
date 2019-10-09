@@ -4,13 +4,18 @@ version = "0.1.0"
 authors = ["Steve Degosserie <steve@parity.io>"]
 edition = "2018"
 license = "MIT/Apache-2.0"
-description = "Manage modules of a Substrate runtime."
+readme = "README.md"
+homepage = "https://github.com/stiiifffsubstrate-deps"
+repository = "https://github.com/stiiifff/substrate-deps"
+documentation = "https://github.com/stiiifff/substrate-deps/blob/master/README.md"
+description = """
+Substrate-deps, a command line tool for managing Parity Substrate runtime module dependencies.
+"""
 
 [dependencies]
 clap = "2.33"
 cargo = "0.39"
 cargo-edit = {git = "https://github.com/tofay/cargo-edit", branch = "alt-registries"}
-cargo_metadata = "0.8"
 dirs = "2.0"
 env_logger = "0.7"
 hex = "0.4"

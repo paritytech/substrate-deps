@@ -1738,7 +1738,6 @@ dependencies = [
  "Inflector 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "cargo 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cargo-edit 0.4.0 (git+https://github.com/tofay/cargo-edit?branch=alt-registries)",
- "cargo_metadata 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",

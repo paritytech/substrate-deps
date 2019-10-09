@@ -25,7 +25,7 @@ pub fn add_module_to_runtime(
     let module_trait_existing = Regex::new(
         format!(
             r"(?x)
-                [^//]impl\s+{}::Trait\s+for\s+Runtime\s+\{{
+                [^/]\s+impl\s+{}::Trait\s+for\s+Runtime\s+\{{
                     [^\}}]+
                 \}}
         ",
@@ -51,12 +51,21 @@ pub fn add_module_to_runtime(
     }
     module_trait_impl.push_str("}");
 
-    let module_config = format!(
+    let mut module_config = format!(
         r"
-        {}: {}::{{Module, Call, Storage, Event<T>}},",
+        {}: {}::{{",
         inflector::cases::titlecase::to_title_case(&mod_name),
         mod_name
     );
+    match mod_metadata.as_ref().unwrap().module_cfg_defaults() {
+        Some(cfg_defaults) => {
+            for cfg_default in cfg_defaults {
+                module_config.push_str(format!("{}, ", cfg_default).as_ref())
+            }
+        }
+        None => debug!("No cfg defaults for module {}", mod_dependency.name),
+    }
+    module_config.push_str("},");
 
     let mut original = fs::read_to_string(&runtime_lib_path)?;
     let mut modified = if module_trait_existing.is_match(&original) {

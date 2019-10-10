@@ -54,6 +54,7 @@ pub fn find_manifest_file(file: &str) -> CliResult<PathBuf> {
 pub fn add_module_to_manifest(
     manifest_path: &Path,
     mod_dependency: &Dependency,
+    mod_alias: &Option<&str>,
     mod_metadata: &Option<SubstrateMetadata>,
     registry: Option<&str>,
 ) -> CliResult<()> {
@@ -61,7 +62,11 @@ pub fn add_module_to_manifest(
     let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf()))
         .map_err(|e| CliError::Manifest(e.to_string()))?;
 
-    let mod_name = module_name(mod_dependency, mod_metadata);
+    let mod_name = &inflector::cases::camelcase::to_camel_case(module_name(
+        mod_dependency,
+        mod_alias,
+        mod_metadata,
+    ));
 
     // Generate TOML table for module dependency
     let mod_dep_toml = module_dependency_to_toml(
@@ -148,11 +153,13 @@ fn insert_into_array(
 
 pub fn module_name<'a>(
     mod_dependency: &'a Dependency,
+    mod_alias: &Option<&'a str>,
     mod_metadata: &'a Option<SubstrateMetadata>,
 ) -> &'a str {
-    match mod_metadata {
-        Some(meta) => meta.module_name(),
-        None => &mod_dependency.name,
+    match (mod_alias, mod_metadata) {
+        (Some(alias), _) => alias,
+        (None, Some(meta)) => meta.module_alias(),
+        (None, None) => &mod_dependency.name,
     }
 }
 

@@ -44,7 +44,7 @@ pub struct SubstrateMetadata {
 }
 
 impl SubstrateMetadata {
-    pub fn module_name(&self) -> &String {
+    pub fn module_alias(&self) -> &String {
         &self.module_name
     }
 

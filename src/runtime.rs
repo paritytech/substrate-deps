@@ -13,14 +13,15 @@ use regex::Regex;
 pub fn add_module_to_runtime(
     manifest_path: &Path,
     mod_dependency: &Dependency,
+    mod_alias: &Option<&str>,
     mod_metadata: &Option<SubstrateMetadata>,
 ) -> CliResult<()> {
-    assert!(
-        mod_metadata.is_some(),
-        "Should have metadata to update runtime."
-    );
     let runtime_lib_path = manifest_path.parent().unwrap().join("src").join("lib.rs");
-    let mod_name = module_name(mod_dependency, mod_metadata);
+    let mod_name = &inflector::cases::camelcase::to_camel_case(module_name(
+        mod_dependency,
+        mod_alias,
+        mod_metadata,
+    ));
 
     let module_trait_existing = Regex::new(
         format!(
@@ -39,7 +40,10 @@ pub fn add_module_to_runtime(
     )?;
 
     let mut module_trait_impl = format!("impl {}::Trait for Runtime {{ \n", mod_name);
-    match mod_metadata.as_ref().unwrap().trait_deps_defaults() {
+    match mod_metadata
+        .as_ref()
+        .and_then(|meta| meta.trait_deps_defaults())
+    {
         Some(trait_defaults) => {
             for trait_default in trait_defaults {
                 module_trait_impl.push_str(
@@ -54,10 +58,13 @@ pub fn add_module_to_runtime(
     let mut module_config = format!(
         r"
         {}: {}::{{",
-        inflector::cases::titlecase::to_title_case(&mod_name),
+        inflector::cases::pascalcase::to_pascal_case(&mod_name),
         mod_name
     );
-    match mod_metadata.as_ref().unwrap().module_cfg_defaults() {
+    match mod_metadata
+        .as_ref()
+        .and_then(|meta| meta.module_cfg_defaults().as_ref())
+    {
         Some(cfg_defaults) => {
             for cfg_default in cfg_defaults {
                 module_config.push_str(format!("{}, ", cfg_default).as_ref())

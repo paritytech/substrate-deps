@@ -167,7 +167,7 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .global(true)
                 .help("Use verbose output"),
         )
-        //TODO: add support for verbose, quiet, (module) version,
+        //TODO: add support for (module) version,
         // offline, locked, no-default-features, etc
         .subcommand(
             SubCommand::with_name("add")
@@ -185,6 +185,10 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                         .help("Alias to be used in code & config e.g. staking instead of srml-staking")
                         .takes_value(true)
                 )
+        )
+        .subcommand(
+            SubCommand::with_name("graph")
+                .about("Generate a graph of the Substrate runtime module dependencies.")
         )
         .get_matches()
 }

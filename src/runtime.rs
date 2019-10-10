@@ -1,5 +1,5 @@
 use crate::error::{CliError, CliResult};
-use crate::manifest::module_name;
+use crate::manifest::module_alias;
 use crate::metadata::SubstrateMetadata;
 
 use std::fs;
@@ -17,7 +17,7 @@ pub fn add_module_to_runtime(
     mod_metadata: &Option<SubstrateMetadata>,
 ) -> CliResult<()> {
     let runtime_lib_path = manifest_path.parent().unwrap().join("src").join("lib.rs");
-    let mod_name = &inflector::cases::camelcase::to_camel_case(module_name(
+    let mod_name = &inflector::cases::camelcase::to_camel_case(module_alias(
         mod_dependency,
         mod_alias,
         mod_metadata,

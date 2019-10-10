@@ -62,7 +62,7 @@ pub fn add_module_to_manifest(
     let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf()))
         .map_err(|e| CliError::Manifest(e.to_string()))?;
 
-    let mod_name = &inflector::cases::camelcase::to_camel_case(module_name(
+    let mod_name = &inflector::cases::camelcase::to_camel_case(module_alias(
         mod_dependency,
         mod_alias,
         mod_metadata,
@@ -151,14 +151,17 @@ fn insert_into_array(
     Ok(())
 }
 
-pub fn module_name<'a>(
+pub fn module_alias<'a>(
     mod_dependency: &'a Dependency,
     mod_alias: &Option<&'a str>,
     mod_metadata: &'a Option<SubstrateMetadata>,
 ) -> &'a str {
     match (mod_alias, mod_metadata) {
         (Some(alias), _) => alias,
-        (None, Some(meta)) => meta.module_alias(),
+        (None, Some(meta)) => match meta.module_alias() {
+            Some(alias) => alias,
+            None => &mod_dependency.name,
+        },
         (None, None) => &mod_dependency.name,
     }
 }

@@ -24,9 +24,15 @@ use url::Url;
 
 const SUBSTRATE_REGISTRY: &str = "substrate-mods";
 
-fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> CliResult<()> {
+fn handle_add(
+    manifest_path: &PathBuf,
+    module: &str,
+    alias: Option<&str>,
+    registry: Option<&str>,
+) -> CliResult<()> {
     debug!("Manifest path: {:?}", manifest_path);
     debug!("Module: {}", module);
+    debug!("Alias: {:?}", alias);
     debug!("Registry: {:?}", registry);
     assert!(registry.is_some(), "Must use a registry for now.");
 
@@ -47,7 +53,12 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
     update_registry_index(&reg_url).map_err(|e| CliError::Registry(e.to_string()))?;
 
     // Add module dependency (and related dependencies, recursively)
-    add_module_dependency(manifest_path, module, (registry, &reg_url, &reg_path))?;
+    add_module_dependency(
+        manifest_path,
+        module,
+        alias,
+        (registry, &reg_url, &reg_path),
+    )?;
 
     Ok(())
 }
@@ -55,6 +66,7 @@ fn handle_add(manifest_path: &PathBuf, module: &str, registry: Option<&str>) -> 
 fn add_module_dependency(
     manifest_path: &PathBuf,
     module: &str,
+    alias: Option<&str>,
     (registry, reg_url, reg_path): (Option<&str>, &Url, &PathBuf),
 ) -> CliResult<()> {
     // Lookup module latest version
@@ -75,26 +87,33 @@ fn add_module_dependency(
                     add_module_dependency(
                         manifest_path,
                         &mod_dep.1,
+                        None,
                         (registry, reg_url, reg_path),
                     )?;
                 }
             };
-
-            // Add module default config to runtime's lib.rs
-            add_module_to_runtime(manifest_path.as_ref(), &mod_dependency, &mod_metadata)?;
-
-            info!(
-                "Added module {} v{} as dependency in your node runtime manifest.",
-                mod_name, mod_version
-            );
         }
         None => info!("No metadata found for module {}", module),
     }
+
+    // Add module default config to runtime's lib.rs
+    add_module_to_runtime(
+        manifest_path.as_ref(),
+        &mod_dependency,
+        &alias,
+        &mod_metadata,
+    )?;
+
+    info!(
+        "Added module {} v{} as dependency in your node runtime manifest.",
+        mod_name, mod_version
+    );
 
     // Add module to runtime manifest
     add_module_to_manifest(
         manifest_path.as_ref(),
         &mod_dependency,
+        &alias,
         &mod_metadata,
         registry,
     )?;
@@ -158,7 +177,14 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                         .help("Module to be added e.g. srml-staking")
                         .required(true)
                         .index(1),
-                ),
+                )
+                .arg(
+                    Arg::with_name("alias")
+                        .long("alias")
+                        .short("a")
+                        .help("Alias to be used in code & config e.g. staking instead of srml-staking")
+                        .takes_value(true)
+                )
         )
         .get_matches()
 }
@@ -191,12 +217,13 @@ fn main() {
     if let Some(m) = m.subcommand_matches("add") {
         //TODO: move to config.rs
         let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
+        let alias = m.value_of("alias");
         let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
         let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
         let registry = m.value_of("registry");
         //TODO: should get (local registry path, registry uri)
 
-        if let Err(err) = handle_add(&manifest_path, module, registry) {
+        if let Err(err) = handle_add(&manifest_path, module, alias, registry) {
             eprintln!("{}", err);
             std::process::exit(1);
         }

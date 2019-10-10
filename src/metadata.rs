@@ -34,7 +34,7 @@ struct PackageMetadata {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct SubstrateMetadata {
-    module_name: String,
+    module_alias: Option<String>,
     module_label: Option<String>,
     icon: Option<String>,
     module_categories: Option<Vec<String>>,
@@ -44,8 +44,8 @@ pub struct SubstrateMetadata {
 }
 
 impl SubstrateMetadata {
-    pub fn module_name(&self) -> &String {
-        &self.module_name
+    pub fn module_alias(&self) -> &Option<String> {
+        &self.module_alias
     }
 
     pub fn module_label(&self) -> &Option<String> {

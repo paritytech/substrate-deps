@@ -91,8 +91,8 @@ The metadata are defined in `[package.metadata.substrate]` table as follows:
 [package.metadata.substrate]
 # indicates which version of Substrate the module is compatible with
 substrate_version = '2.0'
-# short name of the module e.g. balances instead of srml-balances
-module_name = 'template'
+# Alias name of the module e.g. balances instead of srml-balances
+module_alias = 'template'
 # label describing the module purpose (for future use in a GUI)
 module_label = 'Template Module for Substrate'
 # icon representing the module (for future use in a GUI)

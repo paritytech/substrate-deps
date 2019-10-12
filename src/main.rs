@@ -24,7 +24,7 @@ use url::Url;
 
 const SUBSTRATE_REGISTRY: &str = "substrate-mods";
 
-fn handle_add(
+fn execute_add(
     manifest_path: &PathBuf,
     module: &str,
     alias: Option<&str>,
@@ -126,6 +126,12 @@ fn add_module_dependency(
     Ok(())
 }
 
+fn execute_graph(manifest_path: &PathBuf) -> CliResult<()> {
+    debug!("Manifest path: {:?}", manifest_path);
+    debug!("graphing");
+    Ok(())
+}
+
 fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
         .version(crate_version!())
@@ -218,18 +224,22 @@ fn main() {
     let m = parse_cli();
     config_log(&m);
 
-    if let Some(m) = m.subcommand_matches("add") {
-        //TODO: move to config.rs
-        let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
-        let alias = m.value_of("alias");
-        let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
-        let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
-        let registry = m.value_of("registry");
-        //TODO: should get (local registry path, registry uri)
+    let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
+    let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
 
-        if let Err(err) = handle_add(&manifest_path, module, alias, registry) {
-            eprintln!("{}", err);
-            std::process::exit(1);
+    if let Err(err) = match m.subcommand_name() {
+        Some("add") => {
+            //TODO: move to config.rs
+            let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
+            let alias = m.value_of("alias");
+            let registry = m.value_of("registry");
+            //TODO: should get (local registry path, registry uri)
+            execute_add(&manifest_path, module, alias, registry)
         }
+        Some("graph") => execute_graph(&manifest_path),
+        _ => Ok(()),
+    } {
+        eprintln!("{}", err);
+        std::process::exit(1);
     }
 }

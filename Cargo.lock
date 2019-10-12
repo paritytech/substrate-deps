@@ -201,6 +201,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-deps"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "toml 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cargo-edit"
 version = "0.4.0"
 source = "git+https://github.com/tofay/cargo-edit?branch=alt-registries#204b23fc925c26068e96e9d650c7d180ea71befb"
@@ -1737,6 +1746,7 @@ version = "0.1.0"
 dependencies = [
  "Inflector 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "cargo 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargo-deps 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cargo-edit 0.4.0 (git+https://github.com/tofay/cargo-edit?branch=alt-registries)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -2243,6 +2253,7 @@ dependencies = [
 "checksum bytesize 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "716960a18f978640f25101b5cbf1c6f6b0d3192fab36a2d98ca96f0ecbe41010"
 "checksum c2-chacha 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7d64d04786e0f528460fc884753cf8dddcc466be308f6026f8e355c41a0e4101"
 "checksum cargo 0.39.0 (registry+https://github.com/rust-lang/crates.io-index)" = "92848afb3f52015ba227aa1480c2861f800f92edd41d6536eaaa44ddc8b97837"
+"checksum cargo-deps 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "ce1af280b24c3ae3f711dad300bd65e0d95a93ee6442897be5689cdaf2ee3215"
 "checksum cargo-edit 0.4.0 (git+https://github.com/tofay/cargo-edit?branch=alt-registries)" = "<none>"
 "checksum cargo_metadata 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)" = "700b3731fd7d357223d0000f4dbf1808401b694609035c3c411fbc0cd375c426"
 "checksum cc 1.0.45 (registry+https://github.com/rust-lang/crates.io-index)" = "4fc9a35e1f4290eb9e5fc54ba6cf40671ed2a2514c3eeb2b2a908dda2ea5a1be"

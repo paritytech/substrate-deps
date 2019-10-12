@@ -15,6 +15,7 @@ Substrate-deps, a command line tool for managing Parity Substrate runtime module
 [dependencies]
 clap = "2.33"
 cargo = "0.39"
+cargo-deps = "1.1.1"
 cargo-edit = {git = "https://github.com/tofay/cargo-edit", branch = "alt-registries"}
 dirs = "2.0"
 env_logger = "0.7"

@@ -2,6 +2,7 @@
 
 mod add;
 mod error;
+mod graph;
 mod manifest;
 mod metadata;
 mod registry;
@@ -16,12 +17,6 @@ use log::{warn, LevelFilter};
 use std::env;
 
 const SUBSTRATE_REGISTRY: &str = "substrate-mods";
-
-fn execute_graph(manifest_path: &PathBuf) -> CliResult<()> {
-    debug!("Manifest path: {:?}", manifest_path);
-    debug!("graphing");
-    Ok(())
-}
 
 fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
@@ -125,9 +120,9 @@ fn main() {
             let alias = m.value_of("alias");
             let registry = m.value_of("registry");
             //TODO: should get (local registry path, registry uri)
-            execute_add(&manifest_path, module, alias, registry)
+            add::execute_add(&manifest_path, module, alias, registry)
         }
-        Some("graph") => execute_graph(&manifest_path),
+        Some("graph") => graph::execute_graph(&manifest_path),
         _ => Ok(()),
     } {
         eprintln!("{}", err);

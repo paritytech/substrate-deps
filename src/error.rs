@@ -9,6 +9,7 @@ pub type CliResult<T> = Result<T, CliError>;
 pub enum CliError {
     Dependency(String),
     Generic(String),
+    Graph(String),
     Io(io::Error),
     Manifest(String),
     Metadata(String),
@@ -21,6 +22,7 @@ impl Display for CliError {
         match *self {
             Self::Dependency(ref e) => write!(f, "{}", e),
             Self::Generic(ref e) => write!(f, "{}", e),
+            Self::Graph(ref e) => write!(f, "{}", e),
             Self::Io(ref e) => write!(f, "{}", e),
             Self::Manifest(ref e) => write!(f, "{}", e),
             Self::Metadata(ref e) => write!(f, "{}", e),
@@ -35,6 +37,12 @@ impl CliError {
     pub fn exit(&self) -> ! {
         eprintln!("error: {}", self);
         ::std::process::exit(1)
+    }
+}
+
+impl From<cargo_deps::error::CliError> for CliError {
+    fn from(err: cargo_deps::error::CliError) -> Self {
+        Self::Graph(format!("{}", err))
     }
 }
 

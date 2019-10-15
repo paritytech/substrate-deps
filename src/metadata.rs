@@ -16,20 +16,46 @@ lazy_static! {
 }
 
 #[derive(Clone, Debug, Deserialize)]
-struct Manifest {
+pub struct Manifest {
     package: Option<Package>,
 }
 
+impl Manifest {
+    pub fn package(&self) -> &Option<Package> {
+        &self.package
+    }
+}
+
 #[derive(Clone, Debug, Deserialize)]
-struct Package {
+pub struct Package {
     name: String,
     version: String,
     metadata: Option<PackageMetadata>,
 }
 
+impl Package {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn version(&self) -> &str {
+        &self.version
+    }
+
+    pub fn metadata(&self) -> &Option<PackageMetadata> {
+        &self.metadata
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize)]
-struct PackageMetadata {
+pub struct PackageMetadata {
     substrate: Option<SubstrateMetadata>,
+}
+
+impl PackageMetadata {
+    pub fn substrate(&self) -> &Option<SubstrateMetadata> {
+        &self.substrate
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

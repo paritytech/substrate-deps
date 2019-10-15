@@ -39,19 +39,6 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .help("No output printed to stdout"),
         )
         .arg(
-            Arg::with_name("registry")
-                .long("registry")
-                .value_name("registry")
-                .help("Registry to use")
-                .takes_value(true)
-                .global(true)
-                // For now, we target the Substrate alternative registry.
-                // When Substrate stable modules & core crates are published
-                // on crates.io, this default value will be removed and
-                // crates.io will be used as the default registry.
-                .default_value(SUBSTRATE_REGISTRY),
-        )
-        .arg(
             Arg::with_name("v")
                 .long("verbose")
                 .short("v")
@@ -77,10 +64,29 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                         .help("Alias to be used in code & config e.g. staking instead of srml-staking")
                         .takes_value(true)
                 )
+                .arg(
+            Arg::with_name("registry")
+                .long("registry")
+                .value_name("registry")
+                .help("Registry to use")
+                .takes_value(true)
+                .global(true)
+                // For now, we target the Substrate alternative registry.
+                // When Substrate stable modules & core crates are published
+                // on crates.io, this default value will be removed and
+                // crates.io will be used as the default registry.
+                .default_value(SUBSTRATE_REGISTRY),
+        )
         )
         .subcommand(
             SubCommand::with_name("graph")
                 .about("Generate a graph of the Substrate runtime module dependencies.")
+                .arg(
+                    Arg::with_name("include-versions")
+                    .long("include-versions")
+                    .short("I")
+                    .help("Include the dependency version on nodes")
+                )
         )
         .get_matches()
 }
@@ -122,7 +128,7 @@ fn main() {
             //TODO: should get (local registry path, registry uri)
             add::execute_add(&manifest_path, module, alias, registry)
         }
-        Some("graph") => graph::execute_graph(&manifest_path),
+        Some("graph") => graph::execute_graph(&m),
         _ => Ok(()),
     } {
         eprintln!("{}", err);

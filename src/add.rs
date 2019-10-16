@@ -9,7 +9,7 @@ use log::{debug, info};
 use std::path::PathBuf;
 use url::Url;
 
-pub fn handle_add(
+pub fn execute_add(
     manifest_path: &PathBuf,
     module: &str,
     alias: Option<&str>,

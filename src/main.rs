@@ -2,6 +2,7 @@
 
 mod add;
 mod error;
+mod graph;
 mod manifest;
 mod metadata;
 mod registry;
@@ -38,19 +39,6 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .help("No output printed to stdout"),
         )
         .arg(
-            Arg::with_name("registry")
-                .long("registry")
-                .value_name("registry")
-                .help("Registry to use")
-                .takes_value(true)
-                .global(true)
-                // For now, we target the Substrate alternative registry.
-                // When Substrate stable modules & core crates are published
-                // on crates.io, this default value will be removed and
-                // crates.io will be used as the default registry.
-                .default_value(SUBSTRATE_REGISTRY),
-        )
-        .arg(
             Arg::with_name("v")
                 .long("verbose")
                 .short("v")
@@ -58,7 +46,7 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .global(true)
                 .help("Use verbose output"),
         )
-        //TODO: add support for verbose, quiet, (module) version,
+        //TODO: add support for (module) version,
         // offline, locked, no-default-features, etc
         .subcommand(
             SubCommand::with_name("add")
@@ -75,6 +63,29 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                         .short("a")
                         .help("Alias to be used in code & config e.g. staking instead of srml-staking")
                         .takes_value(true)
+                )
+                .arg(
+            Arg::with_name("registry")
+                .long("registry")
+                .value_name("registry")
+                .help("Registry to use")
+                .takes_value(true)
+                .global(true)
+                // For now, we target the Substrate alternative registry.
+                // When Substrate stable modules & core crates are published
+                // on crates.io, this default value will be removed and
+                // crates.io will be used as the default registry.
+                .default_value(SUBSTRATE_REGISTRY),
+        )
+        )
+        .subcommand(
+            SubCommand::with_name("graph")
+                .about("Generate a graph of the Substrate runtime module dependencies.")
+                .arg(
+                    Arg::with_name("include-versions")
+                    .long("include-versions")
+                    .short("I")
+                    .help("Include the dependency version on nodes")
                 )
         )
         .get_matches()
@@ -105,18 +116,22 @@ fn main() {
     let m = parse_cli();
     config_log(&m);
 
-    if let Some(m) = m.subcommand_matches("add") {
-        //TODO: move to config.rs
-        let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
-        let alias = m.value_of("alias");
-        let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
-        let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
-        let registry = m.value_of("registry");
-        //TODO: should get (local registry path, registry uri)
+    let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
+    let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
 
-        if let Err(err) = add::handle_add(&manifest_path, module, alias, registry) {
-            eprintln!("{}", err);
-            std::process::exit(1);
+    if let Err(err) = match m.subcommand_name() {
+        Some("add") => {
+            //TODO: move to config.rs
+            let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
+            let alias = m.value_of("alias");
+            let registry = m.value_of("registry");
+            //TODO: should get (local registry path, registry uri)
+            add::execute_add(&manifest_path, module, alias, registry)
         }
+        Some("graph") => graph::execute_graph(&m),
+        _ => Ok(()),
+    } {
+        eprintln!("{}", err);
+        std::process::exit(1);
     }
 }

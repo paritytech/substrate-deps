@@ -119,8 +119,8 @@ fn main() {
     let manifest = m.value_of("manifest-path").unwrap(); // manifest-path has a default value so we can safely unwrap
     let manifest_path = find_manifest_file(manifest).unwrap(); // -> Stop on error, if any
 
-    if let Err(err) = match m.subcommand_name() {
-        Some("add") => {
+    if let Err(err) = match m.subcommand() {
+        ("add", Some(m)) => {
             //TODO: move to config.rs
             let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
             let alias = m.value_of("alias");
@@ -128,7 +128,7 @@ fn main() {
             //TODO: should get (local registry path, registry uri)
             add::execute_add(&manifest_path, module, alias, registry)
         }
-        Some("graph") => graph::execute_graph(&m),
+        ("graph", Some(m)) => graph::execute_graph(&m),
         _ => Ok(()),
     } {
         eprintln!("{}", err);

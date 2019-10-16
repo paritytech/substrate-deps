@@ -80,8 +80,6 @@ $ # Generate a dependency graph of the modules used by the runtime whose manifes
 $ cargo run -- graph --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml | dot -Tpng > graph.png
 ```
 
-Note: this command is not yet implemented, but will be soon !
-
 ### Substrate Runtime module metadata model
 
 `substrate-deps` uses metadata defined in module's Cargo.toml manifest to know about module trait dependencies, and to be be able to generate a default configuration for the module's configuration trait.

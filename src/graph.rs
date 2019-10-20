@@ -1,9 +1,12 @@
 use crate::error::*;
 use crate::metadata::Manifest;
 
-use cargo_deps::config::Config;
+use cargo_deps::{get_dep_graph, render_dep_graph, Config};
 use clap::ArgMatches;
-use std::fs;
+use std::{
+    fs,
+    io::{self, Write},
+};
 
 lazy_static! {
     static ref SUBSTRATE_SRML: [String; 29] = [
@@ -49,7 +52,28 @@ pub fn execute_graph(m: &ArgMatches) -> CliResult<()> {
     filter.append(&mut SUBSTRATE_SRML.to_vec());
     cfg.filter = Some(filter);
     cfg.transitive_deps = false;
-    cargo_deps::execute(cfg)?;
+
+    // cargo_deps::execute(cfg)?;
+
+    // let dot_file = cfg.dot_file.clone();
+
+    // Get dependency graph & render it
+    let o = get_dep_graph(cfg)
+        .and_then(|g| render_dep_graph(g))
+        .map_err(|e| e.exit())
+        .unwrap();
+
+    io::stdout()
+        .write_all(&o.into_bytes())
+        .expect("Unable to write graph");
+
+    // Output to stoud or render the dot file
+    // match dot_file {
+    //     None => Box::new(io::stdout()) as Box<dyn Write>,
+    //     Some(file) => Box::new(File::create(&Path::new(&file)).expect("Failed to create file")),
+    // }
+    // .write_all(&o.into_bytes())
+    // .expect("Unable to write graph");
 
     Ok(())
 }

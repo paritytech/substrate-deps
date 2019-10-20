@@ -40,8 +40,8 @@ impl CliError {
     }
 }
 
-impl From<cargo_deps::error::CliError> for CliError {
-    fn from(err: cargo_deps::error::CliError) -> Self {
+impl From<cargo_deps::CliError> for CliError {
+    fn from(err: cargo_deps::CliError) -> Self {
         Self::Graph(format!("{}", err))
     }
 }

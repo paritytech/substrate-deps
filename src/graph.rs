@@ -1,8 +1,9 @@
 use crate::error::*;
 use crate::metadata::Manifest;
 
-use cargo_deps::config::Config;
+use cargo_deps::{get_dep_graph, render_dep_graph, Config};
 use clap::ArgMatches;
+use log::info;
 use std::fs;
 
 lazy_static! {
@@ -49,7 +50,10 @@ pub fn execute_graph(m: &ArgMatches) -> CliResult<()> {
     filter.append(&mut SUBSTRATE_SRML.to_vec());
     cfg.filter = Some(filter);
     cfg.transitive_deps = false;
-    cargo_deps::execute(cfg)?;
+
+    // Get dependency graph & render it
+    let o = get_dep_graph(cfg).and_then(render_dep_graph)?;
+    info!("{}", o);
 
     Ok(())
 }

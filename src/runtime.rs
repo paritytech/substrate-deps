@@ -25,8 +25,8 @@ pub fn add_module_to_runtime(
 
     let module_trait_existing = Regex::new(
         format!(
-            r"(?x)
-                [^/]\s+impl\s+{}::Trait\s+for\s+Runtime\s+\{{
+            r"(?xm)
+                ^impl\s+{}::Trait\s+for\s+Runtime\s+\{{
                     [^\}}]+
                 \}}
         ",

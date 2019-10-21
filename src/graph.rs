@@ -3,8 +3,10 @@ use crate::metadata::Manifest;
 
 use cargo_deps::{get_dep_graph, render_dep_graph, Config};
 use clap::ArgMatches;
-use log::info;
-use std::fs;
+use std::{
+    fs,
+    io::{self, Write},
+};
 
 lazy_static! {
     static ref SUBSTRATE_SRML: [String; 29] = [
@@ -53,7 +55,9 @@ pub fn execute_graph(m: &ArgMatches) -> CliResult<()> {
 
     // Get dependency graph & render it
     let o = get_dep_graph(cfg).and_then(render_dep_graph)?;
-    info!("{}", o);
+    io::stdout()
+        .write_all(&o.into_bytes())
+        .expect("Unable to write graph");
 
     Ok(())
 }

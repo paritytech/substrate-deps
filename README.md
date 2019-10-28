@@ -19,6 +19,13 @@ The following commands are available / planned:
 
 (*) For now, an alternative registry with Substrate SRML modules is available at https://dl.cloudsmith.io/public/steve-degosserie/substrate-mods/cargo/index.git
 
+## How to install
+
+Install `substrate-deps` locally with:
+```bash
+cargo install substrate-deps
+```
+
 ## Commands
 
 ### `substrate-deps add`
@@ -27,12 +34,10 @@ Add a new module dependency to your Substrate runtime's `Cargo.toml`.
 
 #### Examples
 
-Note: `substrate-deps` is not pubished to crates-io yet, so we're running from the sources with `cargo run`.
-
 To add an hypothetical `scml-template-module` that depends on the `srml-balances`module:
 ```sh
 $ # Add the module scml-template-module to the runtime whose manifest is specified as argument, using the specified alternative registry.
-$ cargo run -- add scml-template-module --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml --registry substrate-mods
+$ substrate-deps add scml-template-module --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml --registry substrate-mods
 
 Using registry 'substrate-mods' at: https://dl.cloudsmith.io/public/steve-degosserie/substrate-mods/cargo/index.git
     Updating 'https://dl.cloudsmith.io/public/steve-degosserie/substrate-mods/cargo/index.git' index
@@ -45,7 +50,7 @@ Added module scml-template-module v0.2.1 configuration in your node runtime.
 #### Usage
 
 ```plain
-$ cargo run -- add --help
+$ substrate-deps add --help
 USAGE:
     substrate-deps add [FLAGS] [OPTIONS] <module>
 
@@ -71,13 +76,31 @@ Generates a dependency graph of the modules used by your Substrate runtime.
 
 #### Examples
 
-Note: `substrate-deps` is not pubished to crates-io yet, so we're running from the sources with `cargo run`.
-
 This command output a dependency graph for [graphviz](https://graphviz.gitlab.io/download/), please make sure your have it install to be able to generate an image file with the instruction below.
 
 ```sh
 $ # Generate a dependency graph of the modules used by the runtime whose manifest is specified as argument and pipe it to the dot command to generate an image file.
-$ cargo run -- graph --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml | dot -Tpng > graph.png
+$ substrate-deps graph --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml | dot -Tpng > graph.png
+```
+
+#### Usage
+```plain
+$ substrate-deps graph --help
+substrate-deps-graph
+Generate a graph of the Substrate runtime module dependencies.
+
+USAGE:
+    substrate-deps graph [FLAGS] [OPTIONS]
+
+FLAGS:
+    -h, --help                Prints help information
+    -I, --include-versions    Include the dependency version on nodes
+    -q, --quiet               No output printed to stdout
+    -v, --verbose             Use verbose output
+    -V, --version             Prints version information
+
+OPTIONS:
+    --manifest-path <path>    Path to the manifest of the runtime. [default: Cargo.toml]
 ```
 
 ### Substrate Runtime module metadata model

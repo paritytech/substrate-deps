@@ -74,6 +74,7 @@ pub fn add_module_to_runtime(
     }
     module_config.push_str("},");
 
+    //TODO: refactor this, it's causing mutable-immutable borrow pattern warnings
     let mut original = fs::read_to_string(&runtime_lib_path)?;
     let mut modified = if module_trait_existing.is_match(&original) {
         let result =
@@ -99,6 +100,7 @@ pub fn add_module_to_runtime(
     modified.insert_str(modules.end() - 2, &module_config);
 
     fs::write(runtime_lib_path, modified)?;
+    //--TODO
 
     Ok(())
 }

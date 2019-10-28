@@ -145,7 +145,7 @@ fn insert_into_array(
         })?;
 
     if !array.iter().any(|v| v.as_str() == Some(&array_entry)) {
-        array.push(array_entry);
+        array.push(format!("'{}'", array_entry));
     }
 
     Ok(())
@@ -173,11 +173,11 @@ fn module_dependency_to_toml(
     registry: Option<&str>,
 ) -> (String, toml_edit::Table) {
     let mut data = toml_edit::Table::new();
-    data["package"] = toml_edit::value(package);
-    data["version"] = toml_edit::value(version);
+    data["package"] = toml_edit::value(format!("'{}'", package));
+    data["version"] = toml_edit::value(format!("'{}'", version));
     data["default-features"] = toml_edit::value(false);
     if let Some(registry) = registry {
-        data["registry"] = toml_edit::value(registry);
+        data["registry"] = toml_edit::value(format!("'{}'", registry));
     }
     (name.to_string(), data)
 }

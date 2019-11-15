@@ -2,6 +2,7 @@ substrate-deps
 ==============
 
 [![rust build](https://github.com/stiiifff/substrate-deps/workflows/rust/badge.svg)](https://github.com/stiiifff/substrate-deps/actions)
+[![dependency status](https://deps.rs/repo/github/stiiifff/substrate-deps/status.svg)](https://deps.rs/repo/github/stiiifff/substrate-deps)
 
 `substrate-deps` is a (experimental) command line tool for managing [Parity Substrate](http://substrate.dev) runtime module dependencies.
 It allows adding a new module to your runtime, and applying a default configuration so you can start hacking right away.
@@ -19,6 +20,13 @@ The following commands are available / planned:
 
 (*) For now, an alternative registry with PAINT modules is available at https://dl.cloudsmith.io/public/steve-degosserie/substrate-mods/cargo/index.git
 
+## How to install
+
+Install `substrate-deps` locally with:
+```bash
+cargo install substrate-deps
+```
+
 ## Commands
 
 ### `substrate-deps add`
@@ -27,12 +35,10 @@ Add a new module dependency to your Substrate runtime's `Cargo.toml`.
 
 #### Examples
 
-Note: `substrate-deps` is not pubished to crates-io yet, so we're running from the sources with `cargo run`.
-
 To add an hypothetical `template-module` that depends on the `paint-balances`module:
 ```sh
 $ # Add the module template-module to the runtime whose manifest is specified as argument, using the specified alternative registry.
-$ cargo run -- add template-module --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml --registry substrate-mods
+$ substrate-deps add template-module --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml --registry substrate-mods
 
 Using registry 'substrate-mods' at: https://dl.cloudsmith.io/public/steve-degosserie/substrate-mods/cargo/index.git
     Updating 'https://dl.cloudsmith.io/public/steve-degosserie/substrate-mods/cargo/index.git' index
@@ -45,7 +51,7 @@ Added module template-module v0.2.1 configuration in your node runtime.
 #### Usage
 
 ```plain
-$ cargo run -- add --help
+$ substrate-deps add --help
 USAGE:
     substrate-deps add [FLAGS] [OPTIONS] <module>
 
@@ -71,13 +77,31 @@ Generates a dependency graph of the modules used by your Substrate runtime.
 
 #### Examples
 
-Note: `substrate-deps` is not pubished to crates-io yet, so we're running from the sources with `cargo run`.
-
 This command output a dependency graph for [graphviz](https://graphviz.gitlab.io/download/), please make sure your have it install to be able to generate an image file with the instruction below.
 
 ```sh
 $ # Generate a dependency graph of the modules used by the runtime whose manifest is specified as argument and pipe it to the dot command to generate an image file.
-$ cargo run -- graph --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml | dot -Tpng > graph.png
+$ substrate-deps graph --manifest-path ../substrate-package/substrate-node-template/runtime/Cargo.toml | dot -Tpng > graph.png
+```
+
+#### Usage
+```plain
+$ substrate-deps graph --help
+substrate-deps-graph
+Generate a graph of the Substrate runtime module dependencies.
+
+USAGE:
+    substrate-deps graph [FLAGS] [OPTIONS]
+
+FLAGS:
+    -h, --help                Prints help information
+    -I, --include-versions    Include the dependency version on nodes
+    -q, --quiet               No output printed to stdout
+    -v, --verbose             Use verbose output
+    -V, --version             Prints version information
+
+OPTIONS:
+    --manifest-path <path>    Path to the manifest of the runtime. [default: Cargo.toml]
 ```
 
 ### Substrate Runtime module metadata model

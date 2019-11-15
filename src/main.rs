@@ -53,7 +53,7 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .about("Adds a module to the Substrate runtime.")
                 .arg(
                     Arg::with_name("module")
-                        .help("Module to be added e.g. srml-staking")
+                        .help("Module to be added e.g. paint-staking")
                         .required(true)
                         .index(1),
                 )
@@ -61,7 +61,7 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                     Arg::with_name("alias")
                         .long("alias")
                         .short("a")
-                        .help("Alias to be used in code & config e.g. staking instead of srml-staking")
+                        .help("Alias to be used in code & config e.g. staking instead of paint-staking")
                         .takes_value(true)
                 )
                 .arg(

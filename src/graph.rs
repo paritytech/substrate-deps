@@ -9,41 +9,41 @@ use std::{
 };
 
 lazy_static! {
-    static ref PALETTE: [String; 34] = [
-        "pallet-assets".to_owned(),
-        "pallet-aura".to_owned(),
-        "pallet-authority-discovery".to_owned(),
-        "pallet-authorship".to_owned(),
-        "pallet-babe".to_owned(),
-        "pallet-balances".to_owned(),
-        "pallet-collective".to_owned(),
-        "pallet-contracts".to_owned(),
-        "pallet-democracy".to_owned(),
-        "pallet-elections".to_owned(),
-        "pallet-elections-phragmen".to_owned(),
-        "pallet-evm".to_owned(),
-        "pallet-example".to_owned(),
-        "pallet-executive".to_owned(),
-        "pallet-finality-tracker".to_owned(),
-        "pallet-generic-asset".to_owned(),
-        "pallet-grandpa".to_owned(),
-        "pallet-im-online".to_owned(),
-        "pallet-indices".to_owned(),
-        "pallet-membership".to_owned(),
-        "pallet-metadata".to_owned(),
-        "pallet-nicks".to_owned(),
-        "pallet-offences".to_owned(),
-        "pallet-randomness-collective-flip".to_owned(),
-        "pallet-scored-pool".to_owned(),
-        "pallet-session".to_owned(),
-        "pallet-staking".to_owned(),
-        "pallet-sudo".to_owned(),
-        "pallet-support".to_owned(),
-        "pallet-system".to_owned(),
-        "pallet-timestamp".to_owned(),
-        "pallet-transaction-payment".to_owned(),
-        "pallet-treasury".to_owned(),
-        "pallet-utility".to_owned(),
+    static ref FRAME: [String; 34] = [
+        "frame-assets".to_owned(),
+        "frame-aura".to_owned(),
+        "frame-authority-discovery".to_owned(),
+        "frame-authorship".to_owned(),
+        "frame-babe".to_owned(),
+        "frame-balances".to_owned(),
+        "frame-collective".to_owned(),
+        "frame-contracts".to_owned(),
+        "frame-democracy".to_owned(),
+        "frame-elections".to_owned(),
+        "frame-elections-phragmen".to_owned(),
+        "frame-evm".to_owned(),
+        "frame-example".to_owned(),
+        "frame-executive".to_owned(),
+        "frame-finality-tracker".to_owned(),
+        "frame-generic-asset".to_owned(),
+        "frame-grandpa".to_owned(),
+        "frame-im-online".to_owned(),
+        "frame-indices".to_owned(),
+        "frame-membership".to_owned(),
+        "frame-metadata".to_owned(),
+        "frame-nicks".to_owned(),
+        "frame-offences".to_owned(),
+        "frame-randomness-collective-flip".to_owned(),
+        "frame-scored-pool".to_owned(),
+        "frame-session".to_owned(),
+        "frame-staking".to_owned(),
+        "frame-sudo".to_owned(),
+        "frame-support".to_owned(),
+        "frame-system".to_owned(),
+        "frame-timestamp".to_owned(),
+        "frame-transaction-payment".to_owned(),
+        "frame-treasury".to_owned(),
+        "frame-utility".to_owned(),
     ];
 }
 
@@ -54,7 +54,7 @@ pub fn execute_graph(m: &ArgMatches) -> CliResult<()> {
     let manifest = read_manifest(&cfg.manifest_path)?;
 
     let mut filter = vec![manifest.package().as_ref().unwrap().name().to_owned()];
-    filter.append(&mut PALETTE.to_vec());
+    filter.append(&mut FRAME.to_vec());
     cfg.filter = Some(filter);
     cfg.transitive_deps = false;
 

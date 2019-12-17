@@ -10,18 +10,15 @@ use inflector;
 use log::debug;
 use regex::Regex;
 
-pub fn add_module_to_runtime(
+pub fn add_pallet_to_runtime(
     manifest_path: &Path,
-    mod_dependency: &Dependency,
-    mod_alias: &Option<&str>,
-    mod_metadata: &Option<SubstrateMetadata>,
+    dependency: &Dependency,
+    alias: &Option<&str>,
+    metadata: &Option<SubstrateMetadata>,
 ) -> CliResult<()> {
     let runtime_lib_path = manifest_path.parent().unwrap().join("src").join("lib.rs");
-    let mod_name = &inflector::cases::camelcase::to_camel_case(module_alias(
-        mod_dependency,
-        mod_alias,
-        mod_metadata,
-    ));
+    let mod_name =
+        &inflector::cases::camelcase::to_camel_case(module_alias(dependency, alias, metadata));
 
     let module_trait_existing = Regex::new(
         format!(
@@ -40,7 +37,7 @@ pub fn add_module_to_runtime(
     )?;
 
     let mut module_trait_impl = format!("impl {}::Trait for Runtime {{ \n", mod_name);
-    match mod_metadata
+    match metadata
         .as_ref()
         .and_then(|meta| meta.trait_deps_defaults())
     {
@@ -51,7 +48,7 @@ pub fn add_module_to_runtime(
                 )
             }
         }
-        None => debug!("No trait defaults for module {}", mod_dependency.name),
+        None => debug!("No trait defaults for module {}", dependency.name),
     }
     module_trait_impl.push_str("}");
 
@@ -61,7 +58,7 @@ pub fn add_module_to_runtime(
         inflector::cases::pascalcase::to_pascal_case(&mod_name),
         mod_name
     );
-    match mod_metadata
+    match metadata
         .as_ref()
         .and_then(|meta| meta.module_cfg_defaults().as_ref())
     {
@@ -70,7 +67,7 @@ pub fn add_module_to_runtime(
                 module_config.push_str(format!("{}, ", cfg_default).as_ref())
             }
         }
-        None => debug!("No cfg defaults for module {}", mod_dependency.name),
+        None => debug!("No cfg defaults for module {}", dependency.name),
     }
     module_config.push_str("},");
 

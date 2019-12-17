@@ -17,6 +17,7 @@ use log::{warn, LevelFilter};
 use std::env;
 
 const SUBSTRATE_REGISTRY: &str = "substrate-mods";
+const CRATES_IO_REGISTRY: &str = "crates-io";
 
 fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
@@ -50,10 +51,10 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
         // offline, locked, no-default-features, etc
         .subcommand(
             SubCommand::with_name("add")
-                .about("Adds a module to the Substrate runtime.")
+                .about("Adds a pallet to the Substrate runtime.")
                 .arg(
-                    Arg::with_name("module")
-                        .help("Module to be added e.g. paint-staking")
+                    Arg::with_name("pallet")
+                        .help("Pallet to be added e.g. pallet-staking")
                         .required(true)
                         .index(1),
                 )
@@ -61,7 +62,7 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                     Arg::with_name("alias")
                         .long("alias")
                         .short("a")
-                        .help("Alias to be used in code & config e.g. staking instead of paint-staking")
+                        .help("Alias to be used in code & config e.g. staking instead of pallet-staking")
                         .takes_value(true)
                 )
                 .arg(
@@ -71,16 +72,12 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .help("Registry to use")
                 .takes_value(true)
                 .global(true)
-                // For now, we target the Substrate alternative registry.
-                // When Substrate stable modules & core crates are published
-                // on crates.io, this default value will be removed and
-                // crates.io will be used as the default registry.
-                .default_value(SUBSTRATE_REGISTRY),
+                // .default_value(CRATES_IO_REGISTRY),
         )
         )
         .subcommand(
             SubCommand::with_name("graph")
-                .about("Generate a graph of the Substrate runtime module dependencies.")
+                .about("Generate a graph of the Substrate runtime pallet dependencies.")
                 .arg(
                     Arg::with_name("include-versions")
                     .long("include-versions")
@@ -122,11 +119,11 @@ fn main() {
     if let Err(err) = match m.subcommand() {
         ("add", Some(m)) => {
             //TODO: move to config.rs
-            let module = m.value_of("module").unwrap(); // module arg is required so we can safely unwrap
+            let pallet = m.value_of("pallet").unwrap(); // pallet arg is required so we can safely unwrap
             let alias = m.value_of("alias");
             let registry = m.value_of("registry");
             //TODO: should get (local registry path, registry uri)
-            add::execute_add(&manifest_path, module, alias, registry)
+            add::execute_add(&manifest_path, pallet, alias, registry)
         }
         ("graph", Some(m)) => graph::execute_graph(&m),
         _ => Ok(()),

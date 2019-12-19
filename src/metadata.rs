@@ -11,7 +11,7 @@ use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
 
 lazy_static! {
-    static ref MODULE_DEPS_REGEX: Regex = Regex::new(r"([\w\d_-]+):([\w\d_-]+)").unwrap();
+    static ref PALLET_DEPS_REGEX: Regex = Regex::new(r"([\w\d_-]+):([\w\d_-]+)").unwrap();
     static ref TRAIT_DEPS_REGEX: Regex = Regex::new(r"([\w\d_-]+)=([\w\d_-]+)").unwrap();
 }
 
@@ -60,33 +60,33 @@ impl PackageMetadata {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct SubstrateMetadata {
-    module_alias: Option<String>,
-    module_label: Option<String>,
+    pallet_alias: Option<String>,
+    pallet_label: Option<String>,
     icon: Option<String>,
-    module_categories: Option<Vec<String>>,
-    module_deps_defaults: Option<Vec<String>>,
+    pallet_categories: Option<Vec<String>>,
+    pallet_deps_defaults: Option<Vec<String>>,
     trait_deps_defaults: Option<Vec<String>>,
-    module_cfg_defaults: Option<Vec<String>>,
+    pallet_cfg_defaults: Option<Vec<String>>,
 }
 
 impl SubstrateMetadata {
-    pub fn module_alias(&self) -> &Option<String> {
-        &self.module_alias
+    pub fn pallet_alias(&self) -> &Option<String> {
+        &self.pallet_alias
     }
 
-    pub fn module_label(&self) -> &Option<String> {
-        &self.module_label
+    pub fn pallet_label(&self) -> &Option<String> {
+        &self.pallet_label
     }
 
-    pub fn module_categories(&self) -> &Option<Vec<String>> {
-        &self.module_categories
+    pub fn pallet_categories(&self) -> &Option<Vec<String>> {
+        &self.pallet_categories
     }
 
-    pub fn module_deps_defaults(&self) -> Option<Vec<(String, String)>> {
-        match &self.module_deps_defaults {
+    pub fn pallet_deps_defaults(&self) -> Option<Vec<(String, String)>> {
+        match &self.pallet_deps_defaults {
             Some(deps) => deps
                 .iter()
-                .map(|dep| match MODULE_DEPS_REGEX.captures(dep) {
+                .map(|dep| match PALLET_DEPS_REGEX.captures(dep) {
                     Some(cap) => Some((cap[1].to_owned(), cap[2].to_owned())),
                     None => None,
                 })
@@ -108,13 +108,13 @@ impl SubstrateMetadata {
         }
     }
 
-    pub fn module_cfg_defaults(&self) -> &Option<Vec<String>> {
-        &self.module_cfg_defaults
+    pub fn pallet_cfg_defaults(&self) -> &Option<Vec<String>> {
+        &self.pallet_cfg_defaults
     }
 }
 
-pub fn get_module_metadata(
-    module: &Dependency,
+pub fn get_pallet_metadata(
+    pallet: &Dependency,
     _manifest_path: &Path,
     registry_path: &Path,
 ) -> CliResult<Option<SubstrateMetadata>> {
@@ -137,19 +137,19 @@ pub fn get_module_metadata(
     let mut reg_cfg_json = json::parse(reg_cfg_str.as_str())?;
     let reg_dl_url = reg_cfg_json["dl"].take_string().ok_or_else(|| {
         CliError::Metadata(
-            "Error reading module metadata: could not read registry download URL.".to_owned(),
+            "Error reading pallet metadata: could not read registry download URL.".to_owned(),
         )
     })?;
     debug!("Registry download URL: {}", reg_dl_url);
 
-    // Download module crate from registry
-    let mod_crate = download_crate(module, reg_dl_url)?;
+    // Download pallet crate from registry
+    let mod_crate = download_crate(pallet, reg_dl_url)?;
 
     //TODO: Write crate to local registry cache
 
     // Read Cargo.toml from crate
     let mod_manifest = read_manifest_from_crate(mod_crate)?;
-    debug!("Successfully read manifest from module crate.");
+    debug!("Successfully read manifest from pallet crate.");
 
     Ok(mod_manifest
         .package
@@ -172,7 +172,7 @@ fn read_manifest_from_crate(crate_bytes: Vec<u8>) -> CliResult<Manifest> {
         })
         .ok_or_else(|| {
             CliError::Metadata(
-                "Error reading module metadata: could not read crate manifest.".to_owned(),
+                "Error reading pallet metadata: could not read crate manifest.".to_owned(),
             )
         })??;
 
@@ -181,23 +181,23 @@ fn read_manifest_from_crate(crate_bytes: Vec<u8>) -> CliResult<Manifest> {
 
     toml::from_str(&s).map_err(|_| {
         CliError::Metadata(
-            "Error reading module metadata: could parse crate manifest as TOML.".to_owned(),
+            "Error reading pallet metadata: could parse crate manifest as TOML.".to_owned(),
         )
     })
 }
 
 // See https://github.com/Xion/cargo-download/blob/master/src/main.rs
-fn download_crate(module: &Dependency, reg_dl_url: String) -> CliResult<Vec<u8>> {
+fn download_crate(pallet: &Dependency, reg_dl_url: String) -> CliResult<Vec<u8>> {
     // Check if {crate} & {version} markers are present, if yes replace,
     // if not, assume {crate}/{version}/download URI
-    let name = module.name.as_str();
-    let version = module.version().unwrap();
+    let name = pallet.name.as_str();
+    let version = pallet.version().unwrap();
     let download_url = reg_dl_url
         .replace("{crate}", name)
         .replace("{version}", version);
 
     debug!(
-        "Downloading module crate `{} v{}` from {}",
+        "Downloading pallet crate `{} v{}` from {}",
         name, version, download_url
     );
 
@@ -215,6 +215,6 @@ fn download_crate(module: &Dependency, reg_dl_url: String) -> CliResult<Vec<u8>>
     };
     response.read_to_end(&mut bytes)?;
 
-    debug!("Module crate `{} v{}` downloaded", name, version);
+    debug!("Pallet crate `{} v{}` downloaded", name, version);
     Ok(bytes)
 }

@@ -47,7 +47,7 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .global(true)
                 .help("Use verbose output"),
         )
-        //TODO: add support for (module) version,
+        //TODO: add support for (pallet) version,
         // offline, locked, no-default-features, etc
         .subcommand(
             SubCommand::with_name("add")

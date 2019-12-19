@@ -1,5 +1,5 @@
 use crate::error::{CliError, CliResult};
-use crate::manifest::module_alias;
+use crate::manifest::pallet_alias;
 use crate::metadata::SubstrateMetadata;
 
 use std::fs;
@@ -18,9 +18,9 @@ pub fn add_pallet_to_runtime(
 ) -> CliResult<()> {
     let runtime_lib_path = manifest_path.parent().unwrap().join("src").join("lib.rs");
     let mod_name =
-        &inflector::cases::camelcase::to_camel_case(module_alias(dependency, alias, metadata));
+        &inflector::cases::camelcase::to_camel_case(pallet_alias(dependency, alias, metadata));
 
-    let module_trait_existing = Regex::new(
+    let pallet_trait_existing = Regex::new(
         format!(
             r"(?xm)
                 ^impl\s+{}::Trait\s+for\s+Runtime\s+\{{
@@ -33,26 +33,26 @@ pub fn add_pallet_to_runtime(
     )?;
 
     let construct_runtime = Regex::new(
-        r"construct_runtime!\(\s+pub\s+enum\s+Runtime[^{]+\{(?P<modules>[\s\S]+)\}\s+\);",
+        r"construct_runtime!\(\s+pub\s+enum\s+Runtime[^{]+\{(?P<pallets>[\s\S]+)\}\s+\);",
     )?;
 
-    let mut module_trait_impl = format!("impl {}::Trait for Runtime {{ \n", mod_name);
+    let mut pallet_trait_impl = format!("impl {}::Trait for Runtime {{ \n", mod_name);
     match metadata
         .as_ref()
         .and_then(|meta| meta.trait_deps_defaults())
     {
         Some(trait_defaults) => {
             for trait_default in trait_defaults {
-                module_trait_impl.push_str(
+                pallet_trait_impl.push_str(
                     format!("\ttype {} = {};\n", trait_default.0, trait_default.1).as_ref(),
                 )
             }
         }
-        None => debug!("No trait defaults for module {}", dependency.name),
+        None => debug!("No trait defaults for pallet {}", dependency.name),
     }
-    module_trait_impl.push_str("}");
+    pallet_trait_impl.push_str("}");
 
-    let mut module_config = format!(
+    let mut pallet_config = format!(
         r"
         {}: {}::{{",
         inflector::cases::pascalcase::to_pascal_case(&mod_name),
@@ -60,41 +60,41 @@ pub fn add_pallet_to_runtime(
     );
     match metadata
         .as_ref()
-        .and_then(|meta| meta.module_cfg_defaults().as_ref())
+        .and_then(|meta| meta.pallet_cfg_defaults().as_ref())
     {
         Some(cfg_defaults) => {
             for cfg_default in cfg_defaults {
-                module_config.push_str(format!("{}, ", cfg_default).as_ref())
+                pallet_config.push_str(format!("{}, ", cfg_default).as_ref())
             }
         }
-        None => debug!("No cfg defaults for module {}", dependency.name),
+        None => debug!("No cfg defaults for pallet {}", dependency.name),
     }
-    module_config.push_str("},");
+    pallet_config.push_str("},");
 
     //TODO: refactor this, it's causing mutable-immutable borrow pattern warnings
     let mut original = fs::read_to_string(&runtime_lib_path)?;
-    let mut modified = if module_trait_existing.is_match(&original) {
+    let mut modified = if pallet_trait_existing.is_match(&original) {
         let result =
-            module_trait_existing.replace(&original, |_caps: &regex::Captures| &module_trait_impl);
+            pallet_trait_existing.replace(&original, |_caps: &regex::Captures| &pallet_trait_impl);
         result.into()
     } else {
         let mat = construct_runtime
             .find(&original)
             .ok_or_else(|| CliError::Generic("couldn't find construct_runtime call".to_owned()))?;
-        original.insert_str(mat.start(), format!("{}\n\n", module_trait_impl).as_str());
+        original.insert_str(mat.start(), format!("{}\n\n", pallet_trait_impl).as_str());
         original
     };
 
     let caps = construct_runtime
         .captures(&modified)
         .ok_or_else(|| CliError::Generic("couldn't find construct_runtime call".to_owned()))?;
-    let modules = caps.name("modules").ok_or_else(|| {
+    let pallets = caps.name("pallets").ok_or_else(|| {
         CliError::Generic(
-            "couldn't find runtime modules config inside construct_runtime".to_owned(),
+            "couldn't find runtime pallets config inside construct_runtime".to_owned(),
         )
     })?;
 
-    modified.insert_str(modules.end() - 2, &module_config);
+    modified.insert_str(pallets.end() - 2, &pallet_config);
 
     fs::write(runtime_lib_path, modified)?;
     //--TODO

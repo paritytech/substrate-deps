@@ -9,7 +9,7 @@ homepage = "https://github.com/stiiifffsubstrate-deps"
 repository = "https://github.com/stiiifff/substrate-deps"
 documentation = "https://github.com/stiiifff/substrate-deps/blob/master/README.md"
 description = """
-Substrate-deps, a command line tool for managing Parity Substrate runtime module dependencies.
+Substrate-deps, a command line tool for managing Parity Substrate runtime pallet dependencies.
 """
 
 [dependencies]

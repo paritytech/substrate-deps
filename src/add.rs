@@ -1,6 +1,6 @@
 use crate::error::*;
-use crate::manifest::add_module_to_manifest;
-use crate::metadata::get_module_metadata;
+use crate::manifest::add_pallet_to_manifest;
+use crate::metadata::get_pallet_metadata;
 use crate::registry::registry_path;
 use crate::runtime::add_pallet_to_runtime;
 
@@ -57,7 +57,7 @@ fn add_pallet_dependency(
     alias: Option<&str>,
     (registry, reg_url, reg_path): (Option<&str>, &Url, &PathBuf),
 ) -> CliResult<()> {
-    // Lookup module latest version
+    // Lookup pallet latest version
     let dependency =
         get_latest_dependency(pallet, true, manifest_path.as_ref(), &Some(reg_url.clone()))
             .map_err(|e| CliError::Dependency(e.to_string()))?;
@@ -66,11 +66,11 @@ fn add_pallet_dependency(
     let version = &dependency.version().unwrap();
     debug!("Pallet found: {} v{}", name, version);
 
-    // Fetch module metadata
-    let metadata = get_module_metadata(&dependency, manifest_path, &reg_path)?;
+    // Fetch pallet metadata
+    let metadata = get_pallet_metadata(&dependency, manifest_path, &reg_path)?;
     match &metadata {
         Some(metadata) => {
-            if let Some(mod_deps) = metadata.module_deps_defaults() {
+            if let Some(mod_deps) = metadata.pallet_deps_defaults() {
                 for mod_dep in mod_deps {
                     add_pallet_dependency(
                         manifest_path,
@@ -84,16 +84,16 @@ fn add_pallet_dependency(
         None => info!("No metadata found for pallet {}", pallet),
     }
 
-    // Add module default config to runtime's lib.rs
+    // Add pallet default config to runtime's lib.rs
     add_pallet_to_runtime(manifest_path.as_ref(), &dependency, &alias, &metadata)?;
 
     info!(
-        "Added module {} v{} as dependency in your node runtime manifest.",
+        "Added pallet {} v{} as dependency in your node runtime manifest.",
         name, version
     );
 
-    // Add module to runtime manifest
-    add_module_to_manifest(
+    // Add pallet to runtime manifest
+    add_pallet_to_manifest(
         manifest_path.as_ref(),
         &dependency,
         &alias,

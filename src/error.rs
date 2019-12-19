@@ -54,25 +54,25 @@ impl From<io::Error> for CliError {
 
 impl From<git2::Error> for CliError {
     fn from(err: git2::Error) -> Self {
-        Self::Metadata(format!("Error reading module metadata: {}", err))
+        Self::Metadata(format!("Error reading pallet metadata: {}", err))
     }
 }
 
 impl From<json::Error> for CliError {
     fn from(err: json::Error) -> Self {
-        Self::Metadata(format!("Error reading module metadata: {}", err))
+        Self::Metadata(format!("Error reading pallet metadata: {}", err))
     }
 }
 
 impl From<std::string::FromUtf8Error> for CliError {
     fn from(err: std::string::FromUtf8Error) -> Self {
-        Self::Metadata(format!("Error reading module metadata: {}", err))
+        Self::Metadata(format!("Error reading pallet metadata: {}", err))
     }
 }
 
 impl From<reqwest::Error> for CliError {
     fn from(err: reqwest::Error) -> Self {
-        Self::Metadata(format!("Error reading module metadata: {}", err))
+        Self::Metadata(format!("Error reading pallet metadata: {}", err))
     }
 }
 

@@ -51,37 +51,34 @@ pub fn find_manifest_file(file: &str) -> CliResult<PathBuf> {
     }
 }
 
-pub fn add_module_to_manifest(
+pub fn add_pallet_to_manifest(
     manifest_path: &Path,
-    mod_dependency: &Dependency,
-    mod_alias: &Option<&str>,
-    mod_metadata: &Option<SubstrateMetadata>,
+    dependency: &Dependency,
+    alias: &Option<&str>,
+    metadata: &Option<SubstrateMetadata>,
     registry: Option<&str>,
 ) -> CliResult<()> {
     // Open TOML manifest
     let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf()))
         .map_err(|e| CliError::Manifest(e.to_string()))?;
 
-    let mod_name = &inflector::cases::camelcase::to_camel_case(module_alias(
-        mod_dependency,
-        mod_alias,
-        mod_metadata,
-    ));
+    let name =
+        &inflector::cases::camelcase::to_camel_case(pallet_alias(dependency, alias, metadata));
 
-    // Generate TOML table for module dependency
-    let mod_dep_toml = module_dependency_to_toml(
-        mod_name,
-        mod_dependency.version().unwrap(),
-        &mod_dependency.name,
+    // Generate TOML table for pallet dependency
+    let dep_toml = pallet_dependency_to_toml(
+        name,
+        dependency.version().unwrap(),
+        &dependency.name,
         registry,
     );
 
-    // Add module TOML table to dependencies table
-    insert_into_table(&mut manifest, &["dependencies".to_owned()], mod_dep_toml)?;
+    // Add pallet TOML table to dependencies table
+    insert_into_table(&mut manifest, &["dependencies".to_owned()], dep_toml)?;
 
-    // Add module/std to features table
-    let mod_feature = format!("{}/std", mod_name);
-    insert_into_array(&mut manifest, &["features".to_owned()], "std", mod_feature)?;
+    // Add pallet/std to features table
+    let feature = format!("{}/std", name);
+    insert_into_array(&mut manifest, &["features".to_owned()], "std", feature)?;
 
     // Write modified TOML manifest
     Manifest::find_file(&Some(manifest_path.to_path_buf()))
@@ -151,22 +148,22 @@ fn insert_into_array(
     Ok(())
 }
 
-pub fn module_alias<'a>(
-    mod_dependency: &'a Dependency,
-    mod_alias: &Option<&'a str>,
-    mod_metadata: &'a Option<SubstrateMetadata>,
+pub fn pallet_alias<'a>(
+    dependency: &'a Dependency,
+    alias: &Option<&'a str>,
+    metadata: &'a Option<SubstrateMetadata>,
 ) -> &'a str {
-    match (mod_alias, mod_metadata) {
+    match (alias, metadata) {
         (Some(alias), _) => alias,
-        (None, Some(meta)) => match meta.module_alias() {
+        (None, Some(meta)) => match meta.pallet_alias() {
             Some(alias) => alias,
-            None => &mod_dependency.name,
+            None => &dependency.name,
         },
-        (None, None) => &mod_dependency.name,
+        (None, None) => &dependency.name,
     }
 }
 
-fn module_dependency_to_toml(
+fn pallet_dependency_to_toml(
     name: &str,
     version: &str,
     package: &str,

@@ -120,14 +120,3 @@ trait_deps_defaults = ['Currency=Balances','Event=Event']
 # Define the list of types exposed by the pallet, when configured in the construct_runtime! macro in the the runtime's lib.rs file.
 pallet_cfg_defaults = ['Module','Call','Storage','Event<T>']
 ```
-
-### License
-
-This project is licensed under either of
-
- * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
-   http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or
-   http://opensource.org/licenses/MIT)
-
-at your option.

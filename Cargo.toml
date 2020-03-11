@@ -13,7 +13,7 @@ Substrate-deps, a command line tool for managing Parity Substrate runtime pallet
 
 [dependencies]
 clap = "2.33"
-cargo-deps = "1.2.0"
+cargo-deps = "1.4.1"
 cargo-edit = "0.5.0"
 dirs = "2.0"
 env_logger = "0.7"

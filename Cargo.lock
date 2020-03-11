@@ -136,10 +136,10 @@ dependencies = [
 
 [[package]]
 name = "cargo-deps"
-version = "1.2.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "structopt 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1204,7 +1204,7 @@ name = "substrate-deps"
 version = "0.2.0"
 dependencies = [
  "Inflector 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "cargo-deps 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cargo-deps 1.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cargo-edit 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "dirs 2.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1615,7 +1615,7 @@ dependencies = [
 "checksum byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "a7c3dd8985a7111efc5c80b44e23ecdd8c007de8ade3b96595387e812b957cf5"
 "checksum bytes 0.5.4 (registry+https://github.com/rust-lang/crates.io-index)" = "130aac562c0dd69c56b3b1cc8ffd2e17be31d0b6c25b61c96b76231aa23e39e1"
 "checksum c2-chacha 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7d64d04786e0f528460fc884753cf8dddcc466be308f6026f8e355c41a0e4101"
-"checksum cargo-deps 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a0a63dd6904ae5dcadc01a383e5c843fad7debc0a9c8dd5fc1adccc85a45f30a"
+"checksum cargo-deps 1.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "85c3bb633b5569c40a712c1ef88d8025b3bb53ac90946ff80ebbfc5a1d324dc4"
 "checksum cargo-edit 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a494f4c79d34de5652a6385e8e207832bcb00e4a499e1c5183396bf3d71f5c7f"
 "checksum cargo_metadata 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8d2d1617e838936c0d2323a65cc151e03ae19a7678dd24f72bccf27119b90a5d"
 "checksum cc 1.0.46 (registry+https://github.com/rust-lang/crates.io-index)" = "0213d356d3c4ea2c18c40b037c3be23cd639825c18f25ee670ac7813beeef99c"

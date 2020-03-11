@@ -51,7 +51,9 @@ lazy_static! {
 pub fn execute_graph(m: &ArgMatches) -> CliResult<()> {
     // debug!("Manifest path: {:?}", manifest_path);
 
-    let mut cfg = Config::from_matches(m)?;
+    let mut cfg = Config::default();
+    cfg.manifest_path = m.value_of("manifest-path").unwrap_or("Cargo.toml").into();
+    cfg.include_versions = m.is_present("include-versions");
     let manifest = read_manifest(&cfg.manifest_path)?;
 
     let mut filter = vec![manifest.package().as_ref().unwrap().name().to_owned()];

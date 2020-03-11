@@ -33,6 +33,7 @@ impl Display for CliError {
 }
 
 impl CliError {
+    #[allow(dead_code)]
     /// Print this error and immediately exit the program.
     pub fn exit(&self) -> ! {
         eprintln!("error: {}", self);

@@ -1,6 +1,6 @@
 [package]
 name = "substrate-deps"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Steve Degosserie <steve@parity.io>"]
 edition = "2018"
 readme = "README.md"

@@ -1,5 +1,4 @@
 use crate::error::{CliError, CliResult};
-use crate::metadata::SubstrateMetadata;
 
 use std::{
     env,
@@ -55,15 +54,13 @@ pub fn add_pallet_to_manifest(
     manifest_path: &Path,
     dependency: &Dependency,
     alias: &Option<&str>,
-    metadata: &Option<SubstrateMetadata>,
     registry: Option<&str>,
 ) -> CliResult<()> {
     // Open TOML manifest
     let mut manifest = Manifest::open(&Some(manifest_path.to_path_buf()))
         .map_err(|e| CliError::Manifest(e.to_string()))?;
 
-    let name =
-        &inflector::cases::camelcase::to_camel_case(pallet_alias(dependency, alias, metadata));
+    let name = &inflector::cases::camelcase::to_camel_case(pallet_alias(dependency, alias));
 
     // Generate TOML table for pallet dependency
     let dep_toml = pallet_dependency_to_toml(
@@ -148,18 +145,10 @@ fn insert_into_array(
     Ok(())
 }
 
-pub fn pallet_alias<'a>(
-    dependency: &'a Dependency,
-    alias: &Option<&'a str>,
-    metadata: &'a Option<SubstrateMetadata>,
-) -> &'a str {
-    match (alias, metadata) {
-        (Some(alias), _) => alias,
-        (None, Some(meta)) => match meta.pallet_alias() {
-            Some(alias) => alias,
-            None => &dependency.name,
-        },
-        (None, None) => &dependency.name,
+pub fn pallet_alias<'a>(dependency: &'a Dependency, alias: &Option<&'a str>) -> &'a str {
+    match alias {
+        Some(alias) => alias,
+        None => &dependency.name,
     }
 }
 

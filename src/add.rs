@@ -1,6 +1,5 @@
 use crate::error::*;
 use crate::manifest::add_pallet_to_manifest;
-use crate::metadata::get_pallet_metadata;
 use crate::registry::registry_path;
 use crate::runtime::add_pallet_to_runtime;
 
@@ -55,7 +54,7 @@ fn add_pallet_dependency(
     manifest_path: &PathBuf,
     pallet: &str,
     alias: Option<&str>,
-    (registry, reg_url, reg_path): (Option<&str>, &Url, &PathBuf),
+    (registry, reg_url, _reg_path): (Option<&str>, &Url, &PathBuf),
 ) -> CliResult<()> {
     // Lookup pallet latest version
     let dependency =
@@ -66,26 +65,8 @@ fn add_pallet_dependency(
     let version = &dependency.version().unwrap();
     debug!("Pallet found: {} v{}", name, version);
 
-    // Fetch pallet metadata
-    let metadata = get_pallet_metadata(&dependency, manifest_path, &reg_path)?;
-    match &metadata {
-        Some(metadata) => {
-            if let Some(mod_deps) = metadata.pallet_deps_defaults() {
-                for mod_dep in mod_deps {
-                    add_pallet_dependency(
-                        manifest_path,
-                        &mod_dep.1,
-                        None,
-                        (registry, reg_url, reg_path),
-                    )?;
-                }
-            };
-        }
-        None => info!("No metadata found for pallet {}", pallet),
-    }
-
     // Add pallet default config to runtime's lib.rs
-    add_pallet_to_runtime(manifest_path.as_ref(), &dependency, &alias, &metadata)?;
+    add_pallet_to_runtime(manifest_path.as_ref(), &dependency, &alias)?;
 
     info!(
         "Added pallet {} v{} as dependency in your node runtime manifest.",
@@ -93,16 +74,10 @@ fn add_pallet_dependency(
     );
 
     // Add pallet to runtime manifest
-    add_pallet_to_manifest(
-        manifest_path.as_ref(),
-        &dependency,
-        &alias,
-        &metadata,
-        registry,
-    )?;
+    add_pallet_to_manifest(manifest_path.as_ref(), &dependency, &alias, registry)?;
 
     info!(
-        "metadata {} v{} configuration in your node runtime.",
+        "Added metadata {} v{} configuration in your node runtime.",
         name, version
     );
 

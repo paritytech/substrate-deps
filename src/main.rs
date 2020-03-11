@@ -16,9 +16,6 @@ use clap::{crate_description, crate_name, crate_version, App, Arg, ArgMatches, S
 use log::{warn, LevelFilter};
 use std::env;
 
-const SUBSTRATE_REGISTRY: &str = "substrate-mods";
-const CRATES_IO_REGISTRY: &str = "crates-io";
-
 fn parse_cli<'a>() -> ArgMatches<'a> {
     App::new(crate_name!())
         .version(crate_version!())
@@ -72,7 +69,6 @@ fn parse_cli<'a>() -> ArgMatches<'a> {
                 .help("Registry to use")
                 .takes_value(true)
                 .global(true)
-                // .default_value(CRATES_IO_REGISTRY),
         )
         )
         .subcommand(

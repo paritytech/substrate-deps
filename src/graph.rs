@@ -9,7 +9,7 @@ use std::{
 };
 
 lazy_static! {
-    static ref FRAME: [String; 31] = [
+    static ref FRAME: [String; 35] = [
         "pallet-assets".to_owned(),
         "pallet-aura".to_owned(),
         "pallet-authority-discovery".to_owned(),
@@ -23,6 +23,7 @@ lazy_static! {
         "pallet-elections-phragmen".to_owned(),
         "pallet-evm".to_owned(),
         "pallet-example".to_owned(),
+        "pallet-example-offchain-worker".to_owned(),
         "pallet-finality-tracker".to_owned(),
         "pallet-generic-asset".to_owned(),
         "pallet-grandpa".to_owned(),
@@ -33,14 +34,17 @@ lazy_static! {
         "pallet-nicks".to_owned(),
         "pallet-offences".to_owned(),
         "pallet-randomness-collective-flip".to_owned(),
+        "pallet-randomness-recovery".to_owned(),
         "pallet-scored-pool".to_owned(),
         "pallet-session".to_owned(),
+        "pallet-society".to_owned(),
         "pallet-staking".to_owned(),
         "pallet-sudo".to_owned(),
         "pallet-timestamp".to_owned(),
         "pallet-transaction-payment".to_owned(),
         "pallet-treasury".to_owned(),
         "pallet-utility".to_owned(),
+        "pallet-vesting".to_owned(),
     ];
 }
 

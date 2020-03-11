@@ -64,7 +64,9 @@ This command allows you to add a new pallet dependency to your Substrate runtime
 
 ### `substrate-deps graph`
 
-Generates a dependency graph of the pallets used by your Substrate runtime.
+Generates a dependency graph of the pallets used by your Substrate runtime e.g.
+
+![sample graph](sample-graph.png)
 
 #### Examples
 
